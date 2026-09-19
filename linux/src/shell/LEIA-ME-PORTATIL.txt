@@ -8,8 +8,10 @@ REMIX PLAYER - VERSAO PORTATIL PARA LINUX
 3. (Opcional) Fontes externas - buscar e reproduzir de fontes publicas:
    O Remix nao instala, nao baixa e nao distribui nenhum programa. Se voce quiser
    essa parte, instale pela sua distro:
-      - um programa de linha de comando de midia compativel (precisa aceitar
-        --dump-json, -f e --flat-playlist, e imprimir JSON na saida padrao);
+      - um programa de linha de comando de midia compativel: precisa imprimir JSON
+        na saida padrao e aceitar -j/-J, -f, -o, --flat-playlist, --playlist-items,
+        --no-playlist e --ignore-config (se aceitar tambem --ffmpeg-location e
+        --js-runtimes, o Remix usa; se nao, segue sem elas);
       - ffmpeg;
       - Deno 2.3+ ou Node.js 22+ (algumas fontes exigem um "JavaScript runtime").
    Depois, no Remix: Configuracoes > PROGRAMA DE LINHA DE COMANDO > ESCOLHER O
