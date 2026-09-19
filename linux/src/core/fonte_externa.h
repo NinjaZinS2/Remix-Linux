@@ -51,8 +51,8 @@ namespace fonte {
 // O que o programa de linha de comando precisa aceitar para servir ao Remix.
 // Fica visivel nas Configuracoes e na documentacao: e o contrato, nao um nome.
 inline const wchar_t* Contrato() {
-    return L"Precisa aceitar --dump-json / -j, -f, --flat-playlist, --playlist-items e -o, "
-           L"e imprimir JSON na saida padrao.";
+    return L"Precisa aceitar -j/-J, -f, -o, --flat-playlist, --playlist-items, --no-playlist, "
+           L"--ignore-config, --ffmpeg-location e --js-runtimes, e imprimir JSON na saida padrao.";
 }
 
 struct Estado {

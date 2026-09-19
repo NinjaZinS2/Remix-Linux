@@ -78,6 +78,21 @@ Data desta revisão: **19/09/2026**.
 
 ---
 
+## Testes feitos (19/09/2026)
+
+Com uma CLI de mentira que cumpre o contrato (imprime JSON e, com `-o -`, despeja um MP3):
+
+| Teste | Resultado |
+|---|---|
+| Trava da fronteira (`--after N:fonte`) | `/bin/echo` recusado, comando vazio recusado, caminho configurado roda e devolve a versão |
+| Busca online no PC | 3 resultados lidos do JSON da CLI, com título, artista e duração |
+| Tocar um resultado | áudio chegou ao player (posição 6,8 s de streaming, nada gravado no disco) |
+| Celular (Host) | parear por QR → `/api/online/buscar` devolveu as faixas → `/api/online/ouvir/<id>` entregou 2,9 MB de MP3 192 kbps |
+| Sem CLI configurada | busca mostra "Fontes externas desligadas" + botão CONFIGURAR FONTE EXTERNA; biblioteca, playlists e novidades seguem normais |
+| Player local | arquivo da biblioteca tocou com título e artista |
+
+---
+
 ## Como conferir de novo, a qualquer momento
 
 ```bash

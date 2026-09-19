@@ -46,8 +46,10 @@ O player local, as playlists e os arquivos funcionam sem nada instalado.
 Para **buscar e reproduzir de fontes externas**, o Remix executa um programa de linha de comando
 que **você** instala e configura — nada é distribuído, baixado ou embutido pelo app:
 
-1. Instale, pela sua distro, um programa de linha de comando compatível (ele deve aceitar
-   `--dump-json`, `-f`, `--flat-playlist` e imprimir JSON na saída padrão) e o `ffmpeg`.
+1. Instale, pela sua distro, um programa de linha de comando compatível — ele precisa aceitar
+   `-j`/`-J`, `-f`, `-o`, `--flat-playlist`, `--playlist-items`, `--no-playlist`,
+   `--ignore-config`, `--ffmpeg-location` e `--js-runtimes`, e imprimir JSON na saída padrão — e
+   também o `ffmpeg`.
 2. No Remix: **Configurações > PROGRAMA DE LINHA DE COMANDO > ESCOLHER O PROGRAMA...** (ou digite
    o caminho). O app testa o arquivo na hora e mostra a versão.
 3. Sem isso configurado, as telas online avisam

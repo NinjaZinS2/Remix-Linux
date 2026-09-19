@@ -45,8 +45,9 @@ Regras que o arquivo implementa (estão escritas no cabeçalho dele também):
    fazer. Nenhuma outra parte do app pode inventar caminho alternativo, procurar o programa sozinha
    ou cair para outro executável.
 4. **O app não conhece nenhum programa específico.** Ele publica o **contrato** em
-   `fonte::Contrato()`: "precisa aceitar `--dump-json`/`-j`, `-f`, `--flat-playlist`,
-   `--playlist-items` e `-o`, e imprimir JSON na saída padrão". Qualquer CLI que cumpra serve.
+   `fonte::Contrato()`: as opções que o programa precisa aceitar (`-j`/`-J`, `-f`, `-o`,
+   `--flat-playlist`, `--playlist-items`, `--no-playlist`, `--ignore-config`,
+   `--ffmpeg-location`, `--js-runtimes`) e JSON na saída padrão. Qualquer CLI que cumpra serve.
 5. **Tocar é a ação principal**; salvar uma cópia é secundário e sempre escolha explícita.
 
 ### A API
