@@ -25,6 +25,11 @@ Depende de `app_proc.h` (`RunCapture`, `Proc`) e de uma função que a casca/`ap
 std::wstring g_cfgMediaCli();   // devolve g_cfg.mediaCli
 ```
 
+Detalhe importante: `--ffmpeg-location` e `--js-runtimes` são **extras**. Ao configurar o caminho,
+`ConferirImpl()` roda o programa uma vez com essas duas opções; se ele responder "no such option"
+(ou sair com erro), `Estado.extras` vira `false` e o `fonte::Cmd()` para de mandá-las. Assim uma CLI
+que só cumpre o básico do contrato continua funcionando inteira.
+
 ### 1.2 `config.h` — a chave nova
 
 ```cpp

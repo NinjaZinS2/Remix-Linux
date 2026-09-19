@@ -388,6 +388,17 @@ linux/src/shell/packaging/build-packages.sh   # -> dist/*.deb, dist/*.rpm, dist/
 linux/src/shell/build-appimage.sh        # so o AppImage (um arquivo que roda em qualquer distro)
 ```
 
+## Privacidade
+
+Não tem conta, login, chave de API nem telemetria: o Remix nunca manda para lugar nenhum o que
+você ouve. A biblioteca, as playlists, as capas, as letras baixadas e o `gostos.ini` (o que alimenta
+as recomendações) ficam só na sua máquina, em `~/.config/remix` e no cache.
+
+O app só fala com a internet quando você pede: metadados de novidades e artistas (API pública do
+Deezer), letras (LRCLIB), páginas públicas de Spotify/Apple Music para ler o nome das faixas de um
+link, e a fonte externa que você configurou. O Host é você quem liga, e cada aparelho precisa ser
+autorizado.
+
 ## Como o projeto é organizado por dentro
 
 - [linux/docs/ARQUITETURA.md](linux/docs/ARQUITETURA.md) — as camadas, a fronteira que executa

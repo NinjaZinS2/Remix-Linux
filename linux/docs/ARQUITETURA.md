@@ -68,6 +68,10 @@ Regras que o arquivo implementa (estão escritas no cabeçalho dele também):
 `Rodar` e `Abrir` são a trava: mesmo que algum código futuro monte um comando à mão, ele não roda
 se o primeiro argumento não for exatamente o caminho que a pessoa configurou.
 
+**Opções extras.** `--ffmpeg-location` e `--js-runtimes` não fazem parte do mínimo: ao configurar o
+caminho, o app roda o programa uma vez com elas e, se não forem aceitas, para de mandá-las
+(`Estado.extras`). Uma CLI que só cumpre o básico do contrato funciona igual.
+
 ### Quem usa
 
 | Arquivo | Para quê |
