@@ -760,6 +760,19 @@ static void RunAction(const std::string& a){
     else if(a.rfind("onbusca:",0)==0){ OU().open=true; OU().query=Utf8ToWide(a.substr(8)); OnlineSearchAsync(); }
     else if(a=="letra"){ g_rxLetraOn=!g_rxLetraOn; g_rxLetraScroll=0; BuildLayout(); }
     else if(a=="rxpainel"){ g_rxPainelOn=!g_rxPainelOn; BuildLayout(); }
+    else if(a=="fonte"){   // teste da fronteira: estado + a trava do Rodar/Abrir
+        fonte::Garantir();
+        fonte::Estado e=fonte::Snapshot();
+        fprintf(stderr,"[remix] fonte: configurada=%d caminho=%s versao=%s ffmpeg=%s js=%s\n",
+                (int)fonte::Configurada(),WideToUtf8(e.cli).c_str(),WideToUtf8(e.vCli).c_str(),
+                WideToUtf8(e.ffmpeg).c_str(),WideToUtf8(e.jsName).c_str());
+        CapResult r1=fonte::Rodar({L"/bin/echo",L"nao deveria rodar"},5000);
+        CapResult r2=fonte::Rodar({},5000);
+        auto cmd=fonte::Cmd(); cmd.push_back(L"--version");
+        CapResult r3=fonte::Rodar(cmd,10000);
+        fprintf(stderr,"[remix] trava: outro programa started=%d | vazio started=%d | caminho certo started=%d saida=%s\n",
+                (int)r1.started,(int)r2.started,(int)r3.started,r3.out.substr(0,40).c_str());
+    }
     else if(a=="saidas"){ auto v=Player::OutDevices(); fprintf(stderr,"[remix] saidas (%d): ",(int)v.size()); for(auto& s:v) fprintf(stderr,"%s | ",WideToUtf8(s).c_str()); fprintf(stderr,"| atual=%s\n",WideToUtf8(Player::OutDeviceAtual()).c_str()); }
     else if(a.rfind("rxpag:",0)==0){ int n=atoi(a.c_str()+6); if(n==0){ g_rxPag=RXP_INICIO; BuildLayout(); } else if(n==2){ g_rxPag=RXP_DESCOBRIR; g_rxScroll=0; BuildLayout(); } else { g_rxPag=RXP_LISTA; EnterLibraryView(); } }
     else if(a.rfind("rxgen:",0)==0){ int n=atoi(a.c_str()+6); auto gs=desc::ListaGeneros(); if(n>=0&&n<(int)gs.size()){ g_rxGenero=gs[(size_t)n].id; g_rxGeneroNome=gs[(size_t)n].titulo; g_rxScroll=0; desc::AtualizarGeneros(g_rxGenero,g_rxGeneroNome,RxAvisarNovidades); BuildLayout(); } }

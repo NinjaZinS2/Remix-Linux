@@ -11,7 +11,7 @@
 Name:           remix
 Version:        %{?remix_version}%{!?remix_version:1.6.0}
 Release:        %{?remix_release}%{!?remix_release:1}%{?dist}
-Summary:        Remix Player — player de música MP3/WAV com visual neon
+Summary:        Remix Player — player de música multiplataforma
 License:        Apache-2.0 AND zlib AND MIT AND Bitstream-Vera
 Source0:        remix-stage.tar.gz
 BuildArch:      x86_64
@@ -25,11 +25,15 @@ Recommends:     (ffmpeg or ffmpeg-free)
 Recommends:     (deno or nodejs)
 
 %description
-Player de música para desktop com biblioteca por pasta (ou varredura
-automática), capas personalizadas (arquivo local ou busca na internet),
-temas, efeitos visuais (partículas, LED, glitch, linha corredora), onda de
-áudio real e espectro por frequência. Modos quadrado, CD e vertical.
-Porte Linux (raylib + miniaudio) da versão Windows do Remix.
+Player de música para desktop: biblioteca por pasta (ou varredura automática),
+playlists, capas embutidas ou personalizadas, letras sincronizadas, temas,
+equalizador e efeitos. Tela inicial com novidades e página de artista.
+
+Modo Host: o PC vira servidor e o celular ouve a biblioteca pelo navegador, com
+autorização por aparelho.
+
+Fontes externas são opcionais: o app só executa um programa de linha de comando
+que você instalar e apontar nas configurações.
 
 Configuração e capas ficam em ~/.config/remix (ou ao lado do binário, se
 existir um config.ini lá — modo portátil).
