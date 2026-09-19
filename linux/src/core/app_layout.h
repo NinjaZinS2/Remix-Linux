@@ -173,10 +173,10 @@ static void LayoutSettings(int w,int h){
         R_setOnRecheck={x+20,y+186,x+20+std::min(230,bw),y+218};
         y+=256;
         // caminho da CLI que a pessoa configurou + procurar no sistema
-        sect(x,y,cw,150,L"PROGRAMA DE LINHA DE COMANDO (OPCIONAL)");
-        R_setCli={x+20,y+78,x+cw-20,y+112};
-        R_setCliBuscar={x+20,y+120,x+20+std::min(260,bw),y+152};
-        y+=172;
+        sect(x,y,cw,186,L"PROGRAMA DE LINHA DE COMANDO (OPCIONAL)");
+        R_setCli={x+20,y+112,x+cw-20,y+146};
+        R_setCliBuscar={x+20,y+154,x+20+std::min(260,bw),y+186};
+        y+=206;
     };
     auto sectShortcuts=[&](int x,int& y,int cw){
         // uma linha por acao: rotulo | tecla (clique = capturar) | FOCO/GLOBAL; embaixo, restaurar + dicas

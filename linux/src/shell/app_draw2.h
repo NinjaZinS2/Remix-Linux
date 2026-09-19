@@ -153,10 +153,15 @@ static void DrawSettings(int w,int h){
         {   // programa de linha de comando que a pessoa configurou
             std::wstring cam=g_cfg.mediaCli.empty()?std::wstring(L"(nenhum configurado)"):g_cfg.mediaCli;
             bool ok=fonte::Configurada();
-            gfx::TextRect(L"O Remix não instala nem distribui nada: informe o caminho de um programa de linha de comando compatível que você já tenha.",
-                          RectF((float)R_setCli.left,(float)R_setCli.top-40,(float)(R_setCli.right-R_setCli.left),18),sm,gray,false,gfx::Near,false,gfx::EllipsisChar);
-            gfx::TextRect(ok?(L"Encontrado: "+fonte::Versao()):(g_cfg.mediaCli.empty()?std::wstring(fonte::Contrato()):std::wstring(L"Não encontrei esse arquivo (ou ele não é executável).")),
-                          RectF((float)R_setCli.left,(float)R_setCli.top-20,(float)(R_setCli.right-R_setCli.left),18),sm,ok?white:Argb(255,235,150,110),false,gfx::Near,false,gfx::EllipsisChar);
+            float lw=(float)(R_setCli.right-R_setCli.left);
+            gfx::TextRect(L"O Remix não instala nem distribui nada: aponte um programa que você já tenha.",
+                          RectF((float)R_setCli.left,(float)R_setCli.top-70,lw,18),sm,gray,false,gfx::Near,false,gfx::EllipsisChar);
+            gfx::TextRect(fonte::ContratoCurto(),
+                          RectF((float)R_setCli.left,(float)R_setCli.top-53,lw,18),sm,gray,false,gfx::Near,false,gfx::EllipsisChar);
+            gfx::TextRect(L"Sem isso, o player local, as playlists e os arquivos continuam funcionando.",
+                          RectF((float)R_setCli.left,(float)R_setCli.top-36,lw,18),sm,gray,false,gfx::Near,false,gfx::EllipsisChar);
+            gfx::TextRect(ok?(L"Encontrado: "+fonte::Versao()):(g_cfg.mediaCli.empty()?std::wstring(L"Nenhum programa configurado: as fontes externas estão desligadas."):std::wstring(L"Não encontrei esse arquivo (ou ele não é executável).")),
+                          RectF((float)R_setCli.left,(float)R_setCli.top-19,lw,18),sm,ok?white:Argb(255,235,150,110),false,gfx::Near,false,gfx::EllipsisChar);
             btn(R_setCli,L"CAMINHO: "+cam,ok);
             btn(R_setCliBuscar,L"ESCOLHER O PROGRAMA...",false);
         }

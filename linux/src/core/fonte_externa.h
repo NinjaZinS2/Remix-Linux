@@ -50,14 +50,20 @@ namespace fonte {
 
 // O que o programa de linha de comando precisa aceitar para servir ao Remix.
 // Fica visivel nas Configuracoes e na documentacao: e o contrato, nao um nome.
+// Versao curta, para caber numa linha da tela.
+inline const wchar_t* ContratoCurto() {
+    return L"Precisa imprimir JSON na saida padrao e aceitar -j, -f, -o e --flat-playlist.";
+}
 inline const wchar_t* Contrato() {
-    return L"Precisa aceitar -j/-J, -f, -o, --flat-playlist, --playlist-items, --no-playlist, "
-           L"--ignore-config, --ffmpeg-location e --js-runtimes, e imprimir JSON na saida padrao.";
+    return L"Precisa aceitar -j/-J, -f, -o, --flat-playlist, --playlist-items, --no-playlist e "
+           L"--ignore-config, e imprimir JSON na saida padrao. Se aceitar --ffmpeg-location e "
+           L"--js-runtimes, o Remix usa; se não, segue sem elas.";
 }
 
 struct Estado {
     std::wstring cli, ffmpeg, jsName, jsPath;    // caminhos achados
     std::wstring vCli, vFf, vJs, jsOld;          // versoes (jsOld: achado, mas antigo demais)
+    bool extras = true;                          // a CLI aceita --ffmpeg-location e --js-runtimes?
 };
 
 struct Interno {
@@ -145,10 +151,25 @@ inline void ConferirImpl() {
         if (okv) { js = p; jsn = nn; vJs = vb; break; }
         if (jsOld.empty()) jsOld = nn + L" " + vb;
     }
+    // O contrato tem opcoes obrigatorias e duas "extras" (--ffmpeg-location e
+    // --js-runtimes). Se a CLI escolhida nao conhecer as extras, o Remix simplesmente
+    // para de mandar: melhor perder um atalho do que quebrar tudo.
+    bool extras = true;
+    if (!cli.empty()) {
+        std::vector<std::wstring> a = { cli, L"--ignore-config", L"--no-warnings" };
+        if (!ff.empty()) { a.push_back(L"--ffmpeg-location"); a.push_back(ff); }
+        if (!js.empty()) { a.push_back(L"--js-runtimes"); a.push_back(jsn + L":" + js); }
+        a.push_back(L"--version");
+        CapResult r = RunCapture(a, 20000);
+        std::string e = r.err; for (auto& ch : e) ch = (char)tolower((unsigned char)ch);
+        if (!r.started || r.code != 0 || e.find("no such option") != std::string::npos ||
+            e.find("unrecognized") != std::string::npos || e.find("unknown option") != std::string::npos) extras = false;
+    }
     {
         std::lock_guard<std::mutex> lk(I().m);
         I().e.cli = cli; I().e.ffmpeg = ff; I().e.jsName = jsn; I().e.jsPath = js;
         I().e.vCli = vCli; I().e.vFf = vFf; I().e.vJs = vJs; I().e.jsOld = jsOld;
+        I().e.extras = extras;
     }
 }
 inline void Conferir() {   // nunca deixa "probing" preso: quem espera ficaria parado para sempre
@@ -188,8 +209,10 @@ inline std::vector<std::wstring> Cmd() {
     if (I().e.cli.empty()) return a;
     a.push_back(I().e.cli);
     for (const wchar_t* x : { L"--ignore-config", L"--no-warnings", L"--encoding", L"utf-8", L"--socket-timeout", L"20" }) a.push_back(x);
-    if (!I().e.jsPath.empty()) { a.push_back(L"--js-runtimes"); a.push_back(I().e.jsName + L":" + I().e.jsPath); }
-    if (!I().e.ffmpeg.empty()) { a.push_back(L"--ffmpeg-location"); a.push_back(I().e.ffmpeg); }
+    if (I().e.extras) {   // so quando a CLI escolhida conhece essas opcoes (ver ConferirImpl)
+        if (!I().e.jsPath.empty()) { a.push_back(L"--js-runtimes"); a.push_back(I().e.jsName + L":" + I().e.jsPath); }
+        if (!I().e.ffmpeg.empty()) { a.push_back(L"--ffmpeg-location"); a.push_back(I().e.ffmpeg); }
+    }
     return a;
 }
 
