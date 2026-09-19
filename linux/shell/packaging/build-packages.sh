@@ -79,7 +79,7 @@ cp -a assets/branding assets/fonts assets/themes "$PORT/assets/"
 rm -f "$PORT/assets/branding/app.ico"
 for f in "$PORT"/assets/themes/*.ini; do semcr 644 "assets/themes/$(basename "$f")" "$f"; done
 semcr 755 shell/RODAR.sh "$PORT/RODAR.sh"
-semcr 644 Musica/LEIA-ME.txt "$PORT/Musica/LEIA-ME.txt"
+semcr 644 shell/portatil/MUSICA-LEIA-ME.txt "$PORT/Musica/LEIA-ME.txt"
 semcr 644 shell/README-LINUX.md "$PORT/README-LINUX.md"
 semcr 644 shell/packaging/copyright "$PORT/LICENCAS.txt"
 semcr 755 shell/instalar-dependencias.sh "$PORT/instalar-dependencias.sh"

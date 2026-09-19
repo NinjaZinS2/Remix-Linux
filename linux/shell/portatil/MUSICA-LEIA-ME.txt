@@ -1,0 +1,4 @@
+Coloque aqui as suas musicas (ou escolha outra pasta nas Configuracoes do Remix).
+
+O Remix toca MP3, WAV, FLAC e OGG sem instalar nada. M4A, AAC, Opus, WMA e outros
+formatos precisam do ffmpeg (o instalador de dependencias resolve).
