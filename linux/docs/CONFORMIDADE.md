@@ -52,29 +52,31 @@ Data desta revisão: **19/09/2026**.
 
 ---
 
-## Falta (precisa de decisão ou de acesso que o app não tem)
+## Publicado (19/09/2026)
 
-1. **Publicar o que já está pronto.** As mudanças estão commitadas localmente em
-   `NinjaZinS2/Remix-Linux`; o `git push` depende do seu ok.
+- [x] Limpeza publicada em `NinjaZinS2/Remix-Linux` (commit `324c771`).
+- [x] Repositório antigo `DevelopersOpenSource/Remix` esvaziado: ficaram só `README.md` e `LICENSE`,
+      com os links dos repositórios de cada sistema e os créditos. O histórico continua lá (o código
+      da versão Windows está no commit `3e0eafd`) e as releases seguem publicadas, com os arquivos
+      intactos.
+- [x] Descrição do repositório antigo no GitHub trocada (citava o programa pelo nome) e apontando
+      para o Remix-Linux.
+- [x] Textos das releases antigas (1.2.0, 1.2.1, 1.5.0, 1.5.1, 1.6.0) sem nome de programa de
+      terceiros — só o texto mudou; nenhum download foi removido.
 
-2. **Repositório antigo `DevelopersOpenSource/Remix`.** Ele continua público com o código e os
-   textos antigos (README citando o programa por nome, `windows/INSTALAR-DEPENDENCIAS.bat`, os
-   `.o` versionados) e com a release **v1.6.0** publicada a partir daquele código. Para o portfólio
-   ficar limpo, escolha um caminho:
-   - aplicar lá a mesma limpeza (é o que o [guia do Windows](MUDANCAS-PARA-O-WINDOWS.md) descreve);
-   - deixar o repositório antigo privado ou arquivado e apontar tudo para o novo;
-   - manter como está e usar só o `Remix-Linux` como portfólio (mas o antigo continua no seu perfil).
+---
 
-3. **Descrição e tópicos do repositório no GitHub.** Colocar como descrição "Player de música
-   multiplataforma em C++ — biblioteca local, playlists, letras sincronizadas e acesso pelo
-   celular" e tópicos `music-player`, `cpp`, `linux`, `raylib`. Isso é na página do repositório.
+## Falta
 
-4. **Release nova.** Quando publicar, subir os quatro pacotes gerados por
-   `build-packages.sh` (`.deb`, `.rpm`, AppImage, zip portátil) e usar o texto da versão 1.6.0
-   falando de player, biblioteca e Host — sem citar programa de terceiros.
+1. **Release nova do `Remix-Linux`** com os quatro pacotes gerados por `build-packages.sh`
+   (`.deb`, `.rpm`, AppImage e zip portátil), falando de player, biblioteca e Host.
 
-5. **Versão Windows.** Enquanto a casca Windows não receber as mudanças, ela continua com o código
-   antigo. Guia pronto em [MUDANCAS-PARA-O-WINDOWS.md](MUDANCAS-PARA-O-WINDOWS.md).
+2. **Tópicos do repositório** `Remix-Linux` no GitHub (`music-player`, `cpp`, `linux`, `raylib`).
+
+3. **Versão Windows.** Enquanto a casca Windows não receber as mudanças, ela continua com o código
+   antigo — hoje só no histórico do repositório antigo. Guia pronto em
+   [MUDANCAS-PARA-O-WINDOWS.md](MUDANCAS-PARA-O-WINDOWS.md). Quando o repositório existir, o link
+   entra no README do repositório antigo (a tabela já tem a linha).
 
 ---
 
