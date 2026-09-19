@@ -622,7 +622,7 @@ static void OnChar(int c){ // so caracteres imprimiveis
     if(wb.open&&wb.editing){ if(c>=32&&c!=127&&(int)wb.query.size()<120)wb.query.push_back((wchar_t)c); return; }
     if(OU().open){ if(OU().editing&&c>=32&&c!=127&&(int)OU().query.size()<300) OU().query.push_back((wchar_t)c); return; }
     if(g_editArtist){ if(g_editMode==7&&(c<'0'||c>'9')) return; if(g_editMode==6&&(c<'0'||c>'9')) return; if(c>=32&&c!=127&&(int)g_editBuf.size()<(g_editMode==1?120:(g_editMode>=4?800:64))) g_editBuf.push_back((wchar_t)c); return; }
-    if(g_searchFocus){ if(c>=32&&c!=127&&(int)g_searchBuf.size()<60){ g_searchBuf.push_back((wchar_t)c); if(RxOn()&&g_view==1) EnterLibraryView(); BuildLayout(); } return; }
+    if(g_searchFocus){ if(c>=32&&c!=127&&(int)g_searchBuf.size()<60){ g_searchBuf.push_back((wchar_t)c); if(RxOn()&&g_view!=0) EnterLibraryView(); BuildLayout(); } return; }   // a busca do topo vale para a biblioteca inteira
 }
 // Tecla pressionada com a janela em foco. kc = KeyCode (app_keys.h), mods = KM_*.
 // Enter/Esc/Backspace dos editores e da busca sao fixos; o resto passa pelos atalhos configuraveis.
@@ -801,7 +801,7 @@ static void RunAction(const std::string& a){
     else if(a.rfind("shot:",0)==0){PlatformScreenshot(Utf8ToWide(a.substr(5)));}
     else if(a.rfind("track:",0)==0){int i=atoi(a.c_str()+6);PlayIndex(i,true);}
     else if(a.rfind("key:",0)==0){ Hotkey h; ParseHotkey(Utf8ToWide(a.substr(4)),h); if(h.key) OnKeyEvent(h.key,h.mods); }
-    else if(a.rfind("search:",0)==0){ FocusSearch(); g_searchBuf=Utf8ToWide(a.substr(7)); BuildLayout(); }
+    else if(a.rfind("search:",0)==0){ FocusSearch(); if(RxOn()&&g_view!=0) EnterLibraryView(); g_searchBuf=Utf8ToWide(a.substr(7)); BuildLayout(); }
     else if(a=="tab:playlists"){ ShowPlaylistCards(); }
     else if(a=="tab:tracks"){ EnterLibraryView(); }
     else if(a=="back"){ RunHotkeyAction(HK_CLOSE); }
