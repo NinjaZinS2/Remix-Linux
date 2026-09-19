@@ -141,7 +141,8 @@ git ls-files | grep -iE "\.exe$|\.dll$|\.o$|instalar"
 rpm -qp --recommends linux/dist/remix-*.rpm ; dpkg-deb -I linux/dist/remix_*.deb | grep -i recommends
 ```
 
-O 1, o 3 e o 4 saem vazios; o 2 lista só os cinco arquivos da tabela acima; o 5 pode citar
+O 1, o 3 e o 4 saem vazios; o 2 lista os cinco arquivos da tabela acima mais `app_input.h`
+(a ação de teste `fonte`, que prova a trava); o 5 pode citar
 `ffmpeg`, `zenity`, `libcurl`, `deno`/`nodejs` — utilitários genéricos.
 
 ---

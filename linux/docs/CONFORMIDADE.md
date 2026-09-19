@@ -100,5 +100,5 @@ Com uma CLI de mentira que cumpre o contrato (imprime JSON e, com `-o -`, despej
 grep -rli "NOME" --exclude-dir=.git --exclude-dir=third_party .
 grep -rn "system(\|popen(" linux/src/core/                                  # vazio
 git ls-files | grep -iE "\.exe$|\.dll$|\.o$|instalar"                        # vazio
-grep -rln "fonte::Cmd()\|fonte::CmdTocar(" linux/src/ | grep -v fonte_externa  # só 5 arquivos
+grep -rln "fonte::Cmd()\|fonte::CmdTocar(" linux/src/ | grep -v fonte_externa  # 5 do núcleo + app_input (teste)
 ```
