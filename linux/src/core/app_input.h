@@ -757,6 +757,7 @@ static void RunAction(const std::string& a){
         fprintf(stderr,"[remix] playlists (%d):\n",(int)g_playlists.size());
         for(auto& p:g_playlists) fprintf(stderr,"[remix]   \"%s\" slug=%s itens=%d link=%s\n",WideToUtf8(p.name).c_str(),WideToUtf8(p.slug).c_str(),(int)p.entries.size(),WideToUtf8(p.link).c_str());
     }
+    else if(a=="onabrir"){ OU().open=true; OU().editing=true; BuildLayout(); }   // so abre a busca online, sem procurar nada
     else if(a.rfind("onbusca:",0)==0){ OU().open=true; OU().query=Utf8ToWide(a.substr(8)); OnlineSearchAsync(); }
     else if(a=="letra"){ g_rxLetraOn=!g_rxLetraOn; g_rxLetraScroll=0; BuildLayout(); }
     else if(a=="rxpainel"){ g_rxPainelOn=!g_rxPainelOn; BuildLayout(); }

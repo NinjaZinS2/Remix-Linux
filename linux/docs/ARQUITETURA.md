@@ -99,6 +99,11 @@ Sem CLI configurada:
 Na tela de busca online o app mostra um estado vazio com **CONFIGURAR FONTE EXTERNA**, que leva
 direto às Configurações. O texto é sempre `fonte::MsgFalta()`.
 
+<p align="center">
+  <img src="screenshots/fonte-desligada.png" alt="Busca online sem CLI configurada" width="49%">
+  <img src="screenshots/configuracoes.png" alt="Configurações: FONTES EXTERNAS e PROGRAMA DE LINHA DE COMANDO" width="49%">
+</p>
+
 ---
 
 ## 4. Vocabulário da interface
