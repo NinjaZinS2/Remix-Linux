@@ -4,7 +4,7 @@
 # execucao e abre. Config/capas ficam em ~/.config/remix (como no .deb/.rpm).
 # Ferramentas (appimagetool + runtime estatico) ficam em third_party/appimage/
 # (ja incluidas no projeto; se faltarem, baixa do GitHub). Nao precisa de root.
-#   REMIX_VERSION=1.6.0 linux/build-appimage.sh
+#   REMIX_VERSION=1.6.0 shell/build-appimage.sh
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"; cd "$ROOT"
 VER="${REMIX_VERSION:-1.6.0}"
@@ -20,7 +20,7 @@ if [ ! -f "$RUNTIME" ]; then
   curl -fsSL -o "$RUNTIME" https://github.com/AppImage/type2-runtime/releases/download/continuous/runtime-x86_64 || { echo "[appimage] sem runtime (offline?): pulando"; exit 0; }
 fi
 chmod +x "$TOOL"
-[ -x build/remix ] || bash linux/build.sh
+[ -x build/remix ] || bash shell/build.sh
 # texto enviado pelo site do GitHub a partir do Windows chega com CRLF; o .desktop quebra com isso
 semcr() { install -Dm"$1" /dev/null "$3" && tr -d '\r' < "$2" > "$3"; }
 
@@ -29,12 +29,12 @@ install -Dm755 build/remix "$APP/usr/bin/remix"; strip --strip-unneeded "$APP/us
 for f in splash.png open.wav icon.png; do install -Dm644 "assets/branding/$f" "$APP/usr/share/remix/assets/branding/$f"; done
 for f in assets/fonts/*.ttf; do install -Dm644 "$f" "$APP/usr/share/remix/assets/fonts/$(basename "$f")"; done
 for f in assets/themes/*.ini; do semcr 644 "$f" "$APP/usr/share/remix/assets/themes/$(basename "$f")"; done
-semcr 644 linux/remix.desktop "$APP/usr/share/applications/remix.desktop"
-semcr 644 linux/remix.desktop "$APP/remix.desktop"
-for d in linux/icons/*/; do sz="$(basename "$d")"; install -Dm644 "$d/remix.png" "$APP/usr/share/icons/hicolor/$sz/apps/remix.png"; done
-install -Dm644 linux/icons/256x256/remix.png "$APP/remix.png"
+semcr 644 shell/remix.desktop "$APP/usr/share/applications/remix.desktop"
+semcr 644 shell/remix.desktop "$APP/remix.desktop"
+for d in shell/icons/*/; do sz="$(basename "$d")"; install -Dm644 "$d/remix.png" "$APP/usr/share/icons/hicolor/$sz/apps/remix.png"; done
+install -Dm644 shell/icons/256x256/remix.png "$APP/remix.png"
 ln -sf remix.png "$APP/.DirIcon"
-semcr 644 linux/packaging/copyright "$APP/usr/share/doc/remix/copyright"
+semcr 644 shell/packaging/copyright "$APP/usr/share/doc/remix/copyright"
 cat > "$APP/AppRun" <<'RUN'
 #!/bin/sh
 HERE="$(dirname "$(readlink -f "$0")")"

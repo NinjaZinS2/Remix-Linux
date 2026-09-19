@@ -1,7 +1,0 @@
-// Manifesto do Remix.exe, compilado para "default-manifest.o":
-//   windres -O coff manifest.rc -o default-manifest.o
-// O GCC do MinGW-w64 linka sozinho um arquivo com esse nome (o do compilador so tem
-// asInvoker). Passando -B<esta pasta> na linkagem, o GCC acha o NOSSO primeiro e usa
-// ele no lugar do padrao: o exe fica com um manifesto so (sem -B ficariam dois).
-LANGUAGE 0, 0
-1 24 "app.manifest"

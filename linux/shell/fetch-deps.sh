@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # Baixa o que o build Linux precisa e nao esta no repositorio (nada e instalado
 # no sistema; tudo fica em third_party/):
-#   1) raylib 5.5 (fonte + linux/patches) -> third_party/raylib-5.5
+#   1) raylib 5.5 (fonte + shell/patches) -> third_party/raylib-5.5
 #   2) zig 0.13 (toolchain C/C++ que gera binario p/ glibc antiga, >= 2.27)
 #                                        -> third_party/zig   (REMIX_NO_ZIG=1 pula)
 #   3) headers X11/Wayland, se os pacotes -devel nao estiverem instalados
 #      (dnf download / apt-get download + extracao) -> third_party/sysroot
-# Uso: linux/fetch-deps.sh
+# Uso: shell/fetch-deps.sh
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 TP="$ROOT/third_party"
@@ -20,7 +20,7 @@ fi
 # correcao do Remix no GLFW do raylib (a janela travava abrindo no XWayland): aplica uma vez
 X11C="$TP/raylib-5.5/src/external/glfw/src/x11_window.c"
 if [ -f "$X11C" ] && ! grep -q 'Remix: prazo absoluto' "$X11C"; then
-  echo "[deps] aplicando linux/patches/glfw-x11-visibility-timeout.patch..."
+  echo "[deps] aplicando shell/patches/glfw-x11-visibility-timeout.patch..."
   if command -v patch >/dev/null; then patch -s -p1 --forward -d "$TP/raylib-5.5" < "$ROOT/linux/patches/glfw-x11-visibility-timeout.patch"
   else (cd "$TP/raylib-5.5" && git apply "$ROOT/linux/patches/glfw-x11-visibility-timeout.patch"); fi
 fi

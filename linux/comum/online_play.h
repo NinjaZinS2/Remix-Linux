@@ -539,7 +539,19 @@ inline void OnlineSearchAsync() {
         std::thread([q, gen, tipo] {
             OnlineUI& u2 = OU();
             std::vector<desc::Item> v;
-            RemixSafe("busca de listas", [&] { v = tipo == 1 ? desc::BuscarPlaylists(q, 30) : desc::BuscarAlbuns(q, 30); });
+            RemixSafe("busca de listas", [&] {
+                v = tipo == 1 ? desc::BuscarPlaylists(q, 20) : desc::BuscarAlbuns(q, 24);
+                if (tipo == 1) {   // playlists tambem do YouTube (o catalogo do Deezer nao tem tudo)
+                    std::vector<OLista> yt;
+                    BuscarPlaylistsYoutube(q, yt, 20, nullptr);
+                    for (auto& y : yt) {
+                        desc::Item it; it.kind = desc::K_PLAYLIST; it.titulo = y.titulo;
+                        it.sub = y.sub.empty() ? std::wstring(L"YouTube") : y.sub;
+                        it.capa = y.capa; it.link = y.link; it.id = L"yt";
+                        v.push_back(it);
+                    }
+                }
+            });
             if (gen != u2.gen.load()) return;
             {
                 std::lock_guard<std::mutex> lk(u2.m);

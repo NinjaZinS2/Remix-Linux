@@ -1,7 +1,7 @@
 # Remix Player — pacote RPM (Fedora / Nobara / RHEL-like)
 #
 # Empacota a arvore ja instalada gerada por packaging/build-packages.sh
-# (binario compilado por linux/build.sh + assets). O binario embute a libc++ e
+# (binario compilado por shell/build.sh + assets). O binario embute a libc++ e
 # so depende de glibc (>= 2.27 quando compilado com o zig) e libm; X11/Wayland/
 # OpenGL, libcurl e PulseAudio/ALSA sao carregados em tempo de execucao (dlopen).
 %global debug_package %{nil}
@@ -40,7 +40,7 @@ existir um config.ini lá — modo portátil).
 tar -xzf %{SOURCE0}
 
 %build
-# nada: binario ja compilado por linux/build.sh
+# nada: binario ja compilado por shell/build.sh
 
 %install
 mkdir -p %{buildroot}

@@ -426,6 +426,8 @@ static void BuildLayoutRemix(int w,int h,int chrome){
     // Janela estreita: sem lateral nao teria como navegar, entao volta a barra de
     // abas MUSICAS/PLAYLISTS/ONLINE da biblioteca.
     if(!sideW&&g_rxPag!=RXP_LISTA) g_rxPag=RXP_LISTA;
+    // Digitou na busca: a tela vai para a lista, que e onde os resultados aparecem.
+    if(!g_searchBuf.empty()&&g_rxPag!=RXP_LISTA) g_rxPag=RXP_LISTA;
     R_rxSide = sideW? RECT{0,topH,sideW,h-barH} : RECT{0,0,0,0};
     R_rxBar={0,h-barH,w,h};
     int mx = sideW? sideW+gap : gap;
@@ -463,13 +465,21 @@ static void BuildLayoutRemix(int w,int h,int chrome){
         for(int i=0;i<3;i++){ R_rxNav[i]={x0,y,x1,y+ih}; y+=ih+SI(2); }
         y+=SI(14);
         R_rxNovaPl={x0,y,x1,y+SI(34)}; y+=SI(34)+SI(10);
-        // ordem da lista: "Todas as músicas" e depois as playlists que você mais usa
-        std::vector<std::pair<double,int>> ord;
-        for(size_t i=0;i<g_playlists.size();i++) ord.push_back({desc::PesoPlaylist(g_playlists[i].slug),(int)i});
-        std::stable_sort(ord.begin(),ord.end(),[](const std::pair<double,int>& a,const std::pair<double,int>& b){ return a.first>b.first; });
+        // ordem da lista: "Todas as músicas" e depois as playlists que você mais usa.
+        // Só recalcula quando a lista muda: senão ela se reordenaria a cada clique.
+        std::wstring ass;
+        for(auto& p:g_playlists){ ass+=p.slug; ass+=L"\x01"; }
+        if(ass!=g_rxOrdemAss){
+            g_rxOrdemAss=ass;
+            std::vector<std::pair<double,int>> ord;
+            for(size_t i=0;i<g_playlists.size();i++) ord.push_back({desc::PesoPlaylist(g_playlists[i].slug),(int)i});
+            std::stable_sort(ord.begin(),ord.end(),[](const std::pair<double,int>& a,const std::pair<double,int>& b){ return a.first>b.first; });
+            g_rxOrdemFixa.clear();
+            for(auto& o:ord) g_rxOrdemFixa.push_back(o.second);
+        }
         int fim=(int)R_rxSide.bottom-SI(8), ph=SI(46);
         g_rxSideOrdem.push_back(-1);
-        for(auto& o:ord) g_rxSideOrdem.push_back(o.second);
+        for(int idx:g_rxOrdemFixa) if(idx>=0&&idx<(int)g_playlists.size()) g_rxSideOrdem.push_back(idx);
         for(size_t i=0;i<g_rxSideOrdem.size();i++){ if(y+ph>fim) break; R_rxSidePl.push_back({x0,y,x1,y+ph-SI(4)}); y+=ph; }
         g_rxSideOrdem.resize(R_rxSidePl.size());
     }
@@ -536,6 +546,16 @@ static void BuildLayoutRemix(int w,int h,int chrome){
         if(!g_pickMode&&R_rxMain.bottom-R_rxMain.top>cabH+SI(120)){
             R_rxCab={(int)R_rxMain.left,(int)R_rxMain.top+SI(6),(int)R_rxMain.right,(int)R_rxMain.top+SI(6)+cabH};
             int by=(int)R_rxCab.top+SI(26), bw2=(int)S(112);
+            if(!g_searchBuf.empty()){
+                // digitando: os botoes viram "procurar isso em outro lugar"
+                int w3=(int)S(124);
+                R_rxBuscaAl={(int)R_rxMain.right-w3,by,(int)R_rxMain.right,by+SI(34)};
+                R_rxBuscaPl={(int)R_rxBuscaAl.left-w3-SI(8),by,(int)R_rxBuscaAl.left-SI(8),by+SI(34)};
+                R_rxBuscarOn={(int)R_rxBuscaPl.left-w3-SI(8),by,(int)R_rxBuscaPl.left-SI(8),by+SI(34)};
+                R_rxTocar={0,0,0,0}; R_rxAleat={0,0,0,0};
+                BuildLibraryArea((int)R_rxMain.left,(int)R_rxCab.bottom+SI(4),(int)R_rxMain.right,(int)R_rxMain.bottom,false);
+                return;
+            }
             R_rxTocar={(int)R_rxMain.right-bw2*2-SI(8),by,(int)R_rxMain.right-bw2-SI(8),by+SI(34)};
             R_rxAleat={(int)R_rxMain.right-bw2,by,(int)R_rxMain.right,by+SI(34)};
             BuildLibraryArea((int)R_rxMain.left,(int)R_rxCab.bottom+SI(4),(int)R_rxMain.right,(int)R_rxMain.bottom,false);

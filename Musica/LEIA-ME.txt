@@ -1,5 +1,0 @@
-Coloque aqui seus MP3 e WAV (pode ter subpastas). O Remix usa esta pasta
-quando config.ini tem "MusicFolder=Musica" (padrao do modo portatil).
-
-Capas: um arquivo cover.jpg / capa.png na pasta da musica vira a capa dela.
-Tambem da pra escolher a capa pelo botao da camera dentro do app.

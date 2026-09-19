@@ -1,0 +1,12 @@
+REMIX PLAYER - VERSAO LINUX
+===========================
+Rodar:      bash RODAR.sh        (compila na primeira vez, depois so abre)
+Compilar:   bash build.sh        (baixa o que precisa em ../third_party na 1a vez: bash fetch-deps.sh)
+Pacotes:    bash packaging/build-packages.sh   -> ../dist/*.deb, *.rpm, *.AppImage e zip portatil
+Exe Windows daqui (cross): bash build-windows.sh -> ../windows/Remix.exe
+Tudo de uma vez:           bash build-all.sh
+
+O que tem aqui: main_linux.cpp e os .h desta pasta (janela raylib, desenho, D-Bus/MPRIS,
+atalhos X11) = so o que e diferente no Linux. O resto do player e o ../comum/ (compartilhado
+com o Windows). Imagens/fontes/temas: ../assets. Config, capas e Musica/: pasta de cima.
+Detalhes, problemas comuns e estrutura do codigo: README-LINUX.md

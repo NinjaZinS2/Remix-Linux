@@ -1,253 +1,367 @@
-# Remix Player
+# Remix Player — Linux
 
-A lightweight music player for **Windows and Linux** (C++, one shared core, ~3 MB). Play your local
-library, organize playlists and stream or download music from **YouTube, YouTube Music, SoundCloud,
-Spotify, Deezer and Apple Music** links.
+Player de música em C++ para **Linux** (raylib + miniaudio, ~5 MB): sua biblioteca local,
+playlists, música online (YouTube, YouTube Music, SoundCloud, Spotify, Deezer, Apple Music),
+letras sincronizadas, novidades e recomendações, **Host** para ouvir do celular, Soundpad e bot
+de música do Discord.
 
-> The interface is currently in Brazilian Portuguese. Documentação em português: [README.pt-BR.md](README.pt-BR.md).
+> Este repositório é **só do Remix para Linux**. Ele nasceu do
+> [DevelopersOpenSource/Remix](https://github.com/DevelopersOpenSource/Remix) (Windows + Linux no
+> mesmo lugar) e foi separado para cada sistema seguir no próprio ritmo. Todo o app fica em
+> [`linux/`](linux/); a raiz continua livre para outra pasta (por exemplo `windows/`) no futuro.
 
-<p align="center">
-  <img src="docs/screenshots/inicio.png" alt="Home screen with what is new (Linux)" width="49%">
-  <img src="docs/screenshots/biblioteca.png" alt="Library with the Now playing panel (Linux)" width="49%">
-</p>
-<p align="center">
-  <img src="docs/screenshots/descobrir.png" alt="Discover: browse by genre" width="32%">
-  <img src="docs/screenshots/letra.png" alt="Synced lyrics" width="32%">
-  <img src="docs/screenshots/busca-online.png" alt="Searching ready-made playlists online" width="32%">
-</p>
-<p align="center">
-  <img src="docs/screenshots/windows-inicio.png" alt="Same screen on Windows" width="49%">
-  <img src="docs/screenshots/classico.png" alt="Classic style, still there" width="49%">
-</p>
+Programa pronto para baixar: [Releases](https://github.com/NinjaZinS2/Remix-Linux/releases).
 
-## Credits
+## Como é organizado
 
-<p align="center">
-  <a href="https://github.com/Nero-2077"><img src="https://raw.githubusercontent.com/DevelopersOpenSource/Remix/main/docs/creditos/nero-2077.en.svg" alt="Nero-2077: author of Remix, original idea and Windows version" width="48%"></a>
-  <a href="https://github.com/NinjaZinS2"><img src="https://raw.githubusercontent.com/DevelopersOpenSource/Remix/main/docs/creditos/sodre.en.svg" alt="Sodre (NinjaZinS2): co-developer, playlists, streaming, Linux version and Host for iOS" width="48%"></a>
-</p>
-
-**[Nero-2077](https://github.com/Nero-2077)** created Remix: the original idea and the Windows version.
-**Sodre** ([NinjaZinS2](https://github.com/NinjaZinS2)) joined later as co-developer: worked on the Windows version,
-proposed and built playlists and online music (streaming and downloads), brought Remix to Linux, and came up with **Host** —
-the PC acting as a server for the phone — so Remix reaches the **iPhone (iOS) and other mobile devices** while Nero builds the Android version.
-
-## Download
-
-Portable builds are on the [Releases page](https://github.com/DevelopersOpenSource/Remix/releases), nothing to install:
-
-| System | File |
+| Pasta | O que tem |
 |---|---|
-| Windows 10/11 (x64) | `remix-<version>-windows-x64-portable.zip`: extract the whole folder and run `Remix.exe` |
-| Linux (x86_64, any distro) | `remix-<version>-linux-x86_64-portable.zip`: extract and run `./RODAR.sh` |
+| `linux/comum/` | o núcleo: biblioteca, playlists, player, online, letras, Descobrir, Host, Soundpad, Discord |
+| `linux/shell/` | a casca Linux (raylib, X11/Wayland, MPRIS) e os scripts de build e empacotamento |
+| `linux/assets/` | fontes, ícones, temas e sons do app |
+| `linux/docs/` | documentação e as telas |
+| `linux/build/`, `linux/dist/`, `linux/third_party/` | gerados pelos scripts (fora do git) |
 
-Linux builds only need glibc 2.27 or newer (Ubuntu 18.04+, Debian 10+, Fedora...). A `.deb`, a `.rpm` and an
-AppImage can be built with `bash linux/packaging/build-packages.sh` (see [Building from source](#building-from-source)).
-
-### Online music requirements
-
-Streaming, downloads and online search use free external tools that are **not bundled**: **yt-dlp**, **FFmpeg**
-and a JavaScript runtime, which YouTube now requires (**Deno 2.3+** or **Node.js 22+**). The portable versions
-include an installer:
-
-- **Windows:** double-click `INSTALAR-DEPENDENCIAS.bat` in the Remix folder. It downloads the official yt-dlp,
-  FFmpeg and Deno builds straight into `assets\tools` **inside** Remix, using the `curl` and `tar` built into
-  Windows 10 1803+ and 11 — nothing is installed globally (no pip, no winget, no PATH). Remix only loads these
-  tools from its own `assets\tools` folder. On Windows without `curl`/`tar` it opens App Installer in the
-  Microsoft Store or the official download pages.
-- **Linux:** `bash instalar-dependencias.sh` in the portable folder. It detects the distribution and uses its package
-  manager (apt on Debian/Ubuntu/Mint, dnf on Fedora/Nobara/RHEL, pacman on Arch/Manjaro/CachyOS, zypper on openSUSE,
-  xbps on Void, eopkg on Solus). When the packaged yt-dlp or JavaScript runtime is too old, on immutable systems
-  (Bazzite, Silverblue, SteamOS) or without sudo, it downloads the official yt-dlp, Deno and static FFmpeg builds into
-  `~/.local/bin` and `~/.deno/bin`. On NixOS it prints the `nix` command instead; `--mostrar` only shows the plan.
-
-Then just open Remix: it finds the tools by itself, no restart needed. *Settings › ONLINE* shows what was found.
-Run the installer again from time to time: YouTube changes often and yt-dlp must stay up to date.
-
-**Optional — stem separation:** the installers also offer the **STEMS** option (`/stems` on Windows, `--stems` on
-Linux, about 1 GB): an isolated Python with CPU PyTorch and [Demucs](https://github.com/facebookresearch/demucs)
-(Meta, open source), only for Remix (`assets\tools\stems` on Windows, `~/.local/share/remix/stems` on Linux).
-
-**Optional — Discord bot:** the **DISCORD** option (`/discord` on Windows, `--discord` on Linux, about 60 MB) installs
-Node.js 22 (a portable copy in `assets\tools\node` on Windows; on Linux the system Node.js when it is 22.12+, otherwise the
-official build in `~/.local/share/remix/node`, SHA-256 checked) and the bot packages (`discord.js`, `@discordjs/voice`).
-The Linux installer also installs `pactl`, used by the Soundpad virtual microphone.
-
-### If Remix closes by itself (Windows)
-
-Remix writes `remix-log.txt` next to `Remix.exe` (or in `%LOCALAPPDATA%\Remix`) with every startup step, the
-Windows version, the audio device and the error, and shows a message instead of just disappearing. The next launch
-starts in **safe mode** (no splash sound, effects, tray icon or global hotkeys; force it with `Remix.exe --seguro`).
-Please open an issue with that file. Also check that the whole folder was extracted (do not run `Remix.exe` from
-inside the `.zip`) and that your antivirus did not quarantine it.
-
-## Features
-
-**Library**
-- Scans your Music, Downloads, Documents and Desktop folders (skipping game and app folders) or a folder you choose, and watches it for changes.
-- MP3, WAV, FLAC and OGG built in; M4A, AAC, Opus, WMA and more through ffmpeg.
-- Tags and **embedded cover art** (MP3, M4A/MP4, FLAC, OGG/Opus, WAV/AIFF); custom covers from a file or a web image search.
-- Search, sorting (title, artist, file, date or manual), rename or delete files, edit artist names.
-
-**Playlists**
-- Each playlist is `playlists/<name>/playlist.json` with file paths only: nothing is copied.
-- Add songs from the library, pick files, add a whole folder, **link a folder** (always in sync), paste a link or search online.
-- Files that moved are found again by name and size. Shuffle is a play queue, so your custom order stays intact.
-
-**Online music**
-- Search YouTube Music, YouTube or SoundCloud, or paste links to tracks, albums and playlists from YouTube / YouTube Music, SoundCloud, **Spotify, Deezer and Apple Music**.
-- Spotify, Deezer and Apple Music links provide title, artist and duration (Spotify through its public embed page: no account or API key), and each song is matched on YouTube Music. No DRM is circumvented: audio always comes from YouTube or SoundCloud.
-- **In-memory streaming:** yt-dlp finds the audio URL and ffmpeg decodes straight to RAM. Nothing is written to disk and seeking works.
-- **Streaming queue:** the current song and the next two each get their own channel and preload in the background, so skipping (or reaching the end of a song) starts the next one instantly.
-- **Fast start:** yt-dlp's audio lookup (~3 s) is cached for 25 minutes and shared by the player, the phone (Host) and downloads, and the first search results are looked up in the background — playing one of them starts in about half a second.
-- **Downloads** (MP3, M4A or the original format, with tags and cover) run **several at once** (half your CPU cores, 2 to 6) and reuse the lookup already done by streaming or search; files are assembled in the cache and moved to `Music/Remix Online/<playlist>` only when complete. In download mode a song starts playing by streaming right away while it downloads.
-- Streaming or download can be chosen globally or per playlist. A small journal in the cache lets the app clean up interrupted downloads on the next start.
-
-**Sound: safe volume, effects, stems and a wave that follows the beat**
-- **Safe volume:** perceptual (cubic) volume curve, a master stage that rises at most 40 dB per second and a limiter at
-  −0.3 dBFS. Before, the slider was linear (3% was already −30 dB) and jumping to 100% could blast your headphones;
-  bass boost or the equalizer could also clip.
-- **Effects (header › EFFECTS):** Slow, Speed, Reverb, Bass and 8D, each with 3 levels (click cycles 1 → 2 → 3 → off).
-  Slow/Speed change tempo and pitch together ("slowed"/"sped up").
-- **Stems:** Full, Vocals only, Music only, Drums, Bass and Other, separated in the background with Demucs (optional,
-  see above). On a CPU the first separation takes about half of the song's length; the full song keeps playing, Remix
-  switches to the chosen stem at the same position when it is ready, and the stems are cached (switching is instant
-  afterwards). With a stem mode on, the next songs in the queue are separated ahead.
-- **Rhythm wave:** the wave follows the real audio — fine 25 ms energy, beats detected from the spectrum and the output
-  latency compensated (before it read 50 ms ahead and drifted up to 4% over a song).
-
-**Look and feel**
-- Two interface styles (Settings > INTERFACE STYLE): **Classic** (the original look: theme-colored outlines, LED glow, transport on every card) and **REMIX** (1.6, replacing the old Clean and Spotify + LED): sidebar with Home / Discover / Your library and your playlists, search in the top bar, and the player in a full-width bar at the bottom. The choice is saved as `Style=` in config.ini.
-- Home screen with what is new (1.6): a featured banner, shortcuts to what you played most, **Your mix** (picked from your own library by what you listen to, reshuffled once a day) and rows like "Best of \<artist\>", "Similar to \<artist\>", "From the artists you listen to", plus the country charts, week playlists, hot albums and artists. **Discover** browses by genre. Metadata comes from Deezer's public API (no login, no key); playback still goes through Remix's own online engine (yt-dlp), so you get the full song. Your listening profile stays on your PC (`gostos.ini`).
-- **Now playing panel** (right side): big cover, about the artist (photo, fans, similar artists) and what comes next in the queue. How the recommendations are built: [docs/DESCOBRIR.md](docs/DESCOBRIR.md) (Portuguese).
-- **Synced lyrics**: the current line is highlighted and follows the song, clicking a line jumps there. Lyrics come from LRCLIB (public, no account) and are kept on disk forever, so they work offline afterwards. Also on the phone.
-- **Detailed lists**: track number that turns into an animated equalizer on the song that is playing (play button on hover), cover, where the song comes from (folder or an ONLINE pill with the channel state) and the duration.
-- **Pick where the sound goes** (headphones, speakers, HDMI) from the player bar, without losing your place.
-- Resizable sidebar, and the playlists you open most come first.
-- Square, CD or compact vertical layout; grid or list; themes; LED glow, particles and glitch effects (with a light mode for slower PCs); 8-band equalizer.
-
-**Desktop integration**
-- Keeps playing in the background when the window is closed (optional).
-- Windows: tray icon and media keys. Linux: MPRIS (desktop media applet, media keys, `playerctl`).
-- Configurable hotkeys, each one FOCUS (only while Remix is active) or GLOBAL; `remix --cmd next` for desktop shortcuts on Wayland.
-- Single instance: opening a file hands it to the running player.
-
-## Building from source
+## Compilar e rodar
 
 ```bash
-git clone https://github.com/DevelopersOpenSource/Remix.git
-cd Remix
+bash linux/shell/fetch-deps.sh     # baixa raylib e o compilador (uma vez)
+bash linux/shell/build.sh          # gera linux/build/remix
+linux/build/remix
 ```
 
-### Linux
-
-Nothing is installed system-wide: dependencies are downloaded into `third_party/`.
+Para gerar os pacotes (`.rpm`, `.deb`, AppImage e o zip portátil):
 
 ```bash
-bash linux/fetch-deps.sh                 # raylib 5.5 (+ GLFW patch), zig 0.13, X11/Wayland headers
-bash linux/build.sh                      # -> build/remix and linux/remix
-bash linux/RODAR.sh                      # builds if needed, then runs
-bash linux/packaging/build-packages.sh   # .deb, .rpm, portable zip and AppImage in dist/
-bash linux/build-windows.sh              # cross-compiles windows/Remix.exe with MinGW-w64
+bash linux/shell/packaging/build-packages.sh
 ```
 
-### Windows
+<p align="center">
+  <img src="linux/docs/screenshots/inicio.png" alt="Tela inicial com as novidades (Linux)" width="49%">
+  <img src="linux/docs/screenshots/biblioteca.png" alt="Biblioteca com o painel Tocando agora (Linux)" width="49%">
+</p>
+<p align="center">
+  <img src="linux/docs/screenshots/descobrir.png" alt="Descobrir: navegar por gênero" width="32%">
+  <img src="linux/docs/screenshots/letra.png" alt="Letra sincronizada" width="32%">
+  <img src="linux/docs/screenshots/busca-online.png" alt="Procurar playlists prontas online" width="32%">
+</p>
+<p align="center">
+  <img src="linux/docs/screenshots/classico.png" alt="Estilo clássico, que continua" width="60%">
+</p>
 
-Double-click `windows\COMPILAR.bat`. It uses MinGW-w64 GCC (MSYS2 UCRT64, WinLibs, Scoop or Chocolatey)
-and explains how to install it when missing. Manual commands: [windows/LEIA-ME.txt](windows/LEIA-ME.txt).
+## Créditos
 
-## Host: your PC library on the phone (iPhone and Android)
+<p align="center">
+  <a href="https://github.com/Nero-2077"><img src="https://raw.githubusercontent.com/DevelopersOpenSource/Remix/main/docs/creditos/nero-2077.pt-BR.svg" alt="Nero-2077: autor do Remix, ideia original e versão Windows" width="48%"></a>
+  <a href="https://github.com/NinjaZinS2"><img src="https://raw.githubusercontent.com/DevelopersOpenSource/Remix/main/docs/creditos/sodre.pt-BR.svg" alt="Sodre (NinjaZinS2): co-desenvolvedor, playlists, streaming, versão Linux e Host para iOS" width="48%"></a>
+</p>
 
-Sodre's idea to bring Remix to the **iPhone (iOS)** — and any phone — with no app store, while the native Android version
-is in progress: the PC app becomes a **server** and the phone uses it from the browser ("Add to Home Screen" works).
+**[Nero-2077](https://github.com/Nero-2077)** criou o Remix: a ideia original e a versão Windows.
+**Sodre** ([NinjaZinS2](https://github.com/NinjaZinS2)) entrou depois como co-desenvolvedor: participou da versão Windows,
+sugeriu e desenvolveu as playlists e a música online (streaming e downloads), levou o Remix para o Linux e teve a ideia
+do **Host** — o PC vira servidor para o celular — para o Remix chegar ao **iPhone (iOS) e a outros celulares** enquanto o Nero faz a versão Android.
 
-- **Link a phone:** Settings > HOST (or the **HOST** button in the header) > turn it on. On the phone, **scan the QR code**
-  and type a name — done. Without the QR, open the link, enter the **PIN** and accept the device on the PC. QR codes are
-  single-use and expire in 10 minutes (optionally also require approval on the PC).
-- **You decide what each device gets:** a newly linked device sees **nothing**. Share the whole **library** per device,
-  host playlists to all or some devices, and approve playlists a phone asks to share. Each phone keeps its **own playlists**,
-  isolated from other devices.
-- **A real music-app UI on the phone:** Home, Search, Your Library, playlist pages with back navigation, full-screen
-  **Now Playing** and lock-screen controls, **effects and stems** applied by the PC (the phone just plays the result, so
-  the iPhone lock screen keeps working) and a **wave that follows the beat** computed by the PC. Tuned for **iPhone Safari**: every button gives touch feedback, the seek bar
-  works by tapping or dragging anywhere on it, sheets open the keyboard and stay above it, playback recovers after an
-  error, and the WhatsApp connect page works even in the iPhone preview (no JavaScript needed).
-- **Online on the phone:** search and play YouTube Music, YouTube and SoundCloud from the phone — the **PC** runs yt-dlp and
-  ffmpeg and sends only the audio; hosted playlists with online tracks stream too. The phone never talks to those sites.
-  You can also **paste a playlist or album link** (Spotify, YouTube, YouTube Music, Deezer, Apple Music, SoundCloud,
-  Bandcamp): the PC resolves it and the phone saves the whole thing as one of its own playlists in a tap.
-- **LAN and internet:** same router (Wi-Fi or cable) or a **Cloudflare tunnel** (HTTPS, no port forwarding, CGNAT-friendly,
-  your IP stays hidden). The tunnel link is **shown only after it is verified** (avoids DNS `NXDOMAIN` caching) and has a
-  **COPY LINK** button.
-- **Security:** only local or tunnel connections are accepted (even on a public IP), per-device/per-track authorization
-  (revoking cuts playback immediately), devices linked without "Remember" are temporary, PIN/QR brute-force lockout (per
-  address and global), CSRF/XSS and DNS-rebinding protection, slow-request and DoS limits, optional LAN-only IPv6.
-  Default port **49875**.
-  Details, security model and API in [docs/HOST.md](docs/HOST.md) (Portuguese).
+## Interface
 
-## Soundpad: sounds on your microphone (PC only)
+- **Estilo da interface** (Configuracoes > ESTILO DA INTERFACE): **Classico** (o visual
+  original, com contorno da cor do tema, LED e transporte em cada card) e **REMIX** (1.6; no lugar
+  dos antigos Limpo e Spotify + LED). O REMIX muda a tela inteira: barra lateral com Inicio,
+  Descobrir, Sua biblioteca, + NOVA PLAYLIST e a lista de playlists; busca na barra de cima;
+  area principal com a tela inicial de novidades ou a grade/lista da biblioteca; e o player numa
+  barra embaixo, da largura toda (capa, titulo, transporte, tempo e volume). A escolha vale para
+  O estilo escolhido fica em `Style=` no config.ini.
+- **Tela inicial com novidades** (1.6): destaque no topo, atalhos para o que voce mais ouviu,
+  **Sua mistura** (escolhida da sua propria biblioteca pelo que voce ouve, sorteada uma vez por dia)
+  e fileiras como "O melhor de \<artista\>", "Parecido com \<artista\>" e "Dos artistas que voce
+  ouve", junto com "Bombando agora", "Playlists da semana", "Albuns em alta" e "Artistas do
+  momento". Em **Descobrir** da para navegar por genero e ver as paradas de cada estilo. Tudo vem
+  da API publica do Deezer (sem login e sem chave) e so traz metadados: quem toca e baixa continua
+  sendo o motor online do Remix (yt-dlp), entao vem a musica inteira. O que voce ouve fica em
+  `gostos.ini`, so no seu PC.
+- **Painel Tocando agora** (direita): capa grande, sobre o artista (foto, fas e parecidos) e o que
+  vem depois na fila. Como as recomendacoes sao montadas: [linux/docs/DESCOBRIR.md](linux/docs/DESCOBRIR.md).
+- **Letra sincronizada**: a linha atual fica em destaque acompanhando a musica e tocar numa linha
+  pula para aquele ponto. Vem do LRCLIB (publico, sem conta) e fica guardada no disco para sempre,
+  entao depois funciona ate sem internet. No celular tambem.
+- **Listas com detalhe**: numero da faixa que vira equalizador animado na que esta tocando (play ao
+  passar o mouse), capa, de onde vem a musica (pasta ou pilula ONLINE com o estado do canal) e a
+  duracao.
+- **Escolher onde o som sai** (fone, caixa, HDMI) pela barra do player, sem perder o ponto da musica.
+- Barra lateral com largura ajustavel, e as playlists que voce mais abre aparecem primeiro.
+- **Procurar playlists e albuns prontos** na busca online (abas MUSICAS / PLAYLISTS / ALBUNS), sem
+  precisar sair do app.
+- Modo **normal** redesenhado seguindo a referencia enviada: painel superior com Quadrado/CD e temas, seguido por cards de musica em grade.
+- Modo **vertical** minimalista, focado somente na musica, com CD/capa menor, onda, seek, controles e engrenagem.
+- O modo vertical pode voltar para **Quadrado** ou **CD** em Configuracoes.
+- A janela continua redimensionavel pelas bordas/cantos.
+- Escala geral, titulo, autor e vertical continuam independentes.
+- Controle do LED permanece separado nas configuracoes.
+- Cabecalho (1.1/1.2): Quadrado/CD, **AUTO** (autoplay), **ORDEM** da playlist, **PASTA**
+  (trocar de pasta na hora, com pastas recentes), lista/grade, engrenagem e, no Windows,
+  os botoes minimizar/fechar da janela sem borda.
+- Volume com icone de alto-falante (clique = mudo) e porcentagem ao lado.
+- Clique direito numa musica: tocar, trocar capa, renomear artista, **renomear o arquivo no
+  disco**, abrir a pasta, **excluir (lixeira)** com confirmacao.
+- Atalhos, com duas teclas para não disparar sem querer: Ctrl+Espaço (tocar/pausar), Ctrl+←/→
+  (anterior/próxima), Ctrl+↑/↓ (volume), Ctrl+M (mudo), Ctrl+S (aleatório), Ctrl+R (repetir),
+  Ctrl+0 (reiniciar a faixa), Ctrl+Del (excluir), Alt+↑/↓ (mover na ordem manual), Ctrl+F (buscar),
+  F2 (renomear arquivo), Esc (fecha menus). Todos mudam em Configuracoes > ATALHOS; quem nunca
+  mexeu nos atalhos recebe esse padrão novo sozinho.
+- **MODO LEVE** em Configuracoes > EFEITOS: menos particulas/LED e 30 fps para PCs fracos.
+- **Busca** (caixa acima da lista ou Ctrl+F): filtra por nome/artista/arquivo; Enter toca a primeira.
+- **Playlists** (aba PLAYLISTS acima da lista): cada playlist e uma pasta em `playlists/`
+  dentro da pasta de config, com um `playlist.json` que guarda so o caminho das musicas
+  (nada e copiado nem apagado). Na playlist aberta, **+ ADICIONAR**: marcar musicas da
+  biblioteca (clique nos cards e CONCLUIR), escolher arquivos, adicionar todas de uma pasta,
+  **vincular uma pasta** (a playlist mostra sempre o conteudo atual dela), colar link ou buscar
+  online. Com uma playlist aberta, o botao **PASTA DA PLAYLIST** do cabecalho mexe so nela (a
+  biblioteca nao muda). **+ NOVA PLAYLIST**: vazia, de uma pasta, de um link ou da busca. No
+  card, TOCAR / ALEATORIO, clique abre a lista, botao direito: pasta vinculada, sincronizar com
+  o link, baixar as musicas online, modo online, renomear/excluir. Arquivo que mudou de pasta e
+  reencontrado pelo nome e tamanho; se nao, o app avisa.
+- **Atalhos configuraveis** (Configuracoes > ATALHOS): clique na tecla e pressione a nova
+  combinacao; cada atalho pode ser FOCO (so com a janela ativa, padrao, nao atrapalha jogos)
+  ou GLOBAL (funciona com outro programa na frente / em segundo plano; no Windows via
+  RegisterHotKey). `Remix.exe --cmd next` manda um comando para a instancia aberta.
+- **Aleatorio** e uma fila: a lista fica na sua ordem (inclusive manual); so a ordem de
+  reproducao muda, cada faixa uma vez por ciclo.
+- **Segundo plano**: fechar a janela com musica tocando esconde o player e ele continua
+  tocando (Windows: icone na bandeja com menu; Linux: controles de midia do desktop).
+  Abrir o Remix de novo traz a janela de volta; Ctrl+Q ou "SAIR DO REMIX" encerram.
+  Teclas de midia do teclado funcionam. Tudo ajustavel em Configuracoes > REPRODUCAO
+  (vem ligado; pode desligar).
 
-- **SOUNDPAD** button in the header (or Settings > SOUNDPAD E DISCORD): add sounds (MP3, WAV, OGG and FLAC as they are;
-  M4A, Opus, WMA and others are converted) and play them **on your microphone** for Discord, games and calls. Click to
-  play/stop, keys **1 to 9** while the panel is open, per-sound volume, several sounds at once, progress bars.
-- **Linux:** Remix creates a virtual microphone, **Remix Microfone**, in PipeWire/PulseAudio (`pactl`); it goes away when
-  you turn it off. **Windows:** uses the free **VB-CABLE** virtual cable (pick "CABLE Output" in Discord/the game).
-- **Your voice** is mixed in (Remix never captures its own virtual mic, so no feedback loop) and **monitoring on your
-  headphones** is optional. Guide in [docs/SOUNDPAD.md](docs/SOUNDPAD.md) (Portuguese).
+## Volume, efeitos, stems e onda no ritmo
 
-## Discord music bot (PC only)
+- **Volume seguro:** curva perceptiva (cúbica, a mesma do PipeWire/Pulse), subida de no máximo 40 dB por segundo e
+  limitador em −0,3 dBFS. Antes o controle era linear (3% já era −30 dB): subir para 100% de uma vez dava +30 dB e
+  podia estourar o fone; grave ou equalizador também podiam distorcer.
+- **Efeitos (cabeçalho › EFEITOS):** Slow, Speed, Reverb, Grave e 8D, cada um com 3 níveis (cada clique sobe:
+  1 → 2 → 3 → desliga). Slow e speed mudam velocidade e tom juntos (estilo "slowed"/"sped up") e não somam.
+- **Stems (mesmo painel):** Completa, Só vocal, Só música, Bateria, Baixo e Outros, separados em segundo plano pelo
+  Demucs (opcional, veja o instalador de dependências). Na CPU a primeira separação leva cerca de metade da duração
+  da música; enquanto isso toca a completa, e quando termina o Remix troca para o stem no mesmo ponto. Fica guardado
+  (até 3 GB): da segunda vez é na hora. Com um modo ligado, as próximas da fila já vão sendo separadas.
+- **Onda no ritmo:** a altura vem da energia fina do áudio (25 ms), o "pulo" das batidas detectadas no espectro e o
+  atraso da saída de som é descontado (antes lia 50 ms à frente e ainda adiantava até 4% ao longo da música).
 
-- **Your own** bot in your server: `/play` (name or a YouTube, YouTube Music, SoundCloud, Spotify, Deezer or Apple Music
-  link), `/search` with a pick menu, `/playlist` (only the playlists you allow), `/queue`, `/nowplaying`, `/skip`,
-  `/effect` (slowed, sped up, reverb, bass boost, 8D) and more — shown in Portuguese or English following each user's
-  Discord language.
-- **Your PC does the work** with Remix's own engines (search, links, playlists, effects); the Node.js bot is only the
-  bridge to Discord. You choose: **public queue**, **playlists for everyone**, **online music**, **DJ role**, **per-user
-  limit** and **voting** (by default more than half of the voice channel to skip someone else's song, pause or stop) —
-  nobody ruins it for the listeners. Whoever requested a song can skip their own.
-- On the PC, **▶ DISCORD on top of a cover** (song or playlist card) plays it right away where you are in a voice channel;
-  the **DISCORD** panel shows and controls what each server is playing. The phone Host stays separate.
-- Needs **Node.js 22.12+** and discord.js (dependency installer with the Discord option, or **INSTALAR BOT** in the panel).
-  The token is protected (DPAPI on Windows, a user-only file on Linux). Setup, commands and security in
-  [docs/DISCORD.md](docs/DISCORD.md) (Portuguese).
+## Seek e onda
 
-## File safety (planned)
+- A onda usa a analise real do audio (decodificacao com miniaudio em thread, nos dois sistemas).
+- O progresso possui knob visivel e e arrastavel.
+- No modo normal, cada card tem sua propria barra de seek clicavel/arrastavel.
+- No modo vertical, a barra principal e clicavel/arrastavel.
 
-A plan to protect users from malicious or corrupted music files — play only the decodable audio and the cover, sanitized in an isolated process, without breaking the app — is in [docs/SEGURANCA-DE-ARQUIVOS.md](docs/SEGURANCA-DE-ARQUIVOS.md) (Portuguese). Not implemented yet.
+## Capas personalizadas
 
-## Android (work in progress)
+Cada musica possui um pequeno botao de foto/camera no card e no modo vertical.
+Ao clicar:
 
-The plan for the Android port (reusing the raylib shell, pinned toolchain under `third_party/android`, APK built without Gradle) is in [docs/ANDROID.md](docs/ANDROID.md) (Portuguese); `docs/android-exemplo.zip` holds the example `android/` folder.
+1. abre o seletor de imagens;
+2. voce escolhe JPG/PNG/BMP;
+3. o programa **redimensiona** a imagem para ate 512 px e grava em `assets/covers/` (JPG q88 se opaca, PNG se tiver transparencia);
+4. o player passa a carregar a copia interna;
+5. o mapeamento fica salvo em `covers.ini`.
 
-## Project layout
+Assim, a capa personalizada nao depende do arquivo original continuar no mesmo local — e uma foto de celular de 4 MB vira ~100 KB em disco, sem diferenca visivel (a maior exibicao do player e ~300 px).
 
-| Folder | Contents |
-|---|---|
-| `comum/` | shared core: player (miniaudio), library, playlists, layout, input, online streaming and downloads |
-| `linux/` | Linux shell (raylib), MPRIS, X11 hotkeys, build and packaging scripts |
-| `windows/` | Windows shell (Win32 + GDI+), icon/manifest resources, `COMPILAR.bat` |
-| `assets/` | branding, fonts and themes |
-| `docs/` | extra documentation (Portuguese) and screenshots |
+### Migracao automatica
 
-Run from the project folder (or a portable zip), Remix keeps `config.ini`, `covers.ini`, `artists.ini`,
-`playlists/`, `soundpad/` and `discord.ini` next to it. Installed packages and the AppImage use `~/.config/remix`. Caches live in
-`~/.cache/remix` (Linux) or `%TEMP%\remix-cache` (Windows).
+Na inicializacao, capas antigas maiores que 512 px sao reencodadas no lugar
+(mesmo nome/extensao, entao `covers.ini` continua valido). O original fica de
+backup em `assets/covers/_originais/` — apague essa pasta quando quiser
+liberar o espaco.
 
-## Command line
+## Biblioteca padrao
 
-```text
-remix [file]                 play a file (reuses the running instance)
-remix --cmd <action>         playpause, next, prev, volup, voldown, mute, shuffle, repeat, show, hide, quit
-remix --home <folder>        use another folder for settings and library (portable mode)
+Quando `MusicFolder=` fica vazio no `config.ini`, o player entra no modo **PADRAO** e procura
+MP3/WAV/FLAC/OGG (e os formatos extras, se houver ffmpeg) nas **pastas do usuario**: Musicas,
+Downloads, Documentos, Area de trabalho e pendrives/discos removiveis. Ele nao entra em pastas
+de jogos e programas (Steam, AppData, node_modules, .git...), entao a varredura e rapida e nao
+enche a lista de efeitos sonoros de jogo. Essa busca roda em segundo plano para nao travar a interface.
+
+Em Configuracoes e possivel escolher uma pasta especifica. Ao fazer isso, o modo deixa de ser
+padrao. O botao **PADRAO (PASTAS DO USUARIO)** restaura a busca automatica. O botao **PASTA**
+do cabecalho faz a mesma troca sem abrir as configuracoes (pastas recentes, escolher outra
+ou voltar ao padrao), e a pasta escolhida e monitorada: arquivos novos/removidos aparecem sozinhos.
+
+## Musica online (streaming e download)
+
+Aba **ONLINE** (acima da lista) ou, numa playlist, **+ ADICIONAR > Buscar online / Colar link**.
+Ctrl+V com um link em qualquer lugar do app tambem abre a busca.
+
+- **Busca** por nome no YouTube Music, YouTube ou SoundCloud (animacao de carregando enquanto o
+  yt-dlp procura; os resultados aparecem conforme chegam). Cada resultado tem ▶ (tocar), ↓ (baixar)
+  e + (colocar numa playlist); "ADICIONAR TODAS" salva a lista inteira.
+- **Links** de musica, album ou playlist: YouTube / YouTube Music e SoundCloud tocam direto;
+  **Spotify** (pagina publica "embed": sem conta, sem chave, ~1 s; o spotdl fica so de reserva,
+  porque a API oficial do Spotify ficou restrita e lenta), **Deezer** (API publica) e **Apple Music**
+  (iTunes lookup) viram titulo + artista + duracao, e cada musica e procurada no YouTube Music na hora
+  de tocar (o link tocavel achado fica salvo na playlist). Nao ha quebra de DRM: o audio vem sempre
+  do YouTube/SoundCloud.
+- **Streaming so na memoria**: o yt-dlp acha o endereco do audio e o ffmpeg decodifica para PCM
+  direto na RAM (no maximo 6 min decodificados a frente e ~10 min no total; o que ja tocou e
+  descartado). Fechar o app no meio nao deixa arquivo nenhum. Avancar/voltar (seek) funciona.
+- **Fila de streaming**: a musica atual e as **proximas 2** (na ordem da lista ou do aleatorio) ficam
+  cada uma no seu canal (yt-dlp + ffmpeg + buffer na memoria). As da fila comecam em cascata (cada
+  uma quando a anterior ja achou o audio), guardam ~75 s e esperam a vez com o ffmpeg parado; ao
+  pular ou quando a musica acaba, a proxima sai **na hora** e o canal continua de onde parou. Na lista
+  aparece TOCANDO / FILA: PRONTA / FILA: CARREGANDO com a barra do quanto ja carregou. Memoria: ~12 MB
+  por musica da fila. Uma musica que falhou na fila e pulada sem esperar de novo.
+- **Começo rápido**: a extração do yt-dlp (~3 s, o que mais atrasava) fica guardada por 25 min e é
+  usada pelo player, pelo celular (Host) e pelo download; os 3 primeiros resultados de uma busca já são
+  extraídos em segundo plano. Tocar um deles começa em ~0,5 s em vez de ~3 s.
+- **Download**: fila em segundo plano com **várias músicas ao mesmo tempo** (metade dos núcleos do
+  processador, de 2 a 6), reaproveitando a extração que o streaming ou a busca já fizeram
+  (`--load-info-json`). Pilula no canto inferior direito (clique = abrir a pasta ou cancelar). O arquivo e montado numa pasta temporaria do cache e so vai para a pasta final
+  (`<Musicas>/Remix Online/<playlist>/`, configuravel) quando termina. MP3, M4A ou formato original,
+  com titulo/artista/capa. Terminou: a entrada da playlist passa a apontar para o arquivo.
+- **Streaming ou download**: Configuracoes > ONLINE ("AO TOCAR: STREAMING / BAIXAR") vale para tudo;
+  cada playlist pode ter o proprio modo (pilula "ONLINE: ..." na barra da playlist ou botao direito no
+  card); botao direito numa musica online tem "Baixar". No modo baixar ela ja toca por streaming
+  enquanto baixa.
+- **Diario** (`remix/online/estado-XXXX.json` no cache: `~/.cache` no Linux, `%TEMP%\remix-cache` no
+  Windows): gravado no maximo 1x por segundo e so quando algo muda, com o que esta tocando, como
+  (URL direta ou pipe do yt-dlp), onde (memoria), minuto, % do buffer, cada canal da fila (tocando ou
+  fila, estado, ate onde recebeu) e cada download
+  (status, %, pasta temporaria, destino). Ao abrir, o app le o diario, apaga downloads que ficaram
+  pela metade (sem mexer nos de outro Remix aberto) e lembra a ultima musica online: ela aparece
+  selecionada e o streaming recomeca do inicio ao apertar play.
+
+Precisa de **yt-dlp**, **ffmpeg** e de um "JavaScript runtime" que o YouTube passou a exigir (**Deno 2.3+**
+ou **Node.js 22+**). A versao portatil traz um instalador (com as opcoes **`--stems`**, ~1 GB — um Python isolado
+só para o Remix com PyTorch de CPU e o [Demucs](https://github.com/facebookresearch/demucs), da Meta, código
+aberto; e **`--discord`**, ~60 MB — Node.js 22 e os pacotes do bot do Discord. Ele também instala o `pactl`, que o
+Soundpad usa para criar o microfone virtual):
+
+- **Linux:** `bash instalar-dependencias.sh` (na pasta portatil). Reconhece a distro e usa o gerenciador dela (apt no
+  Debian/Ubuntu/Mint, dnf no Fedora/Nobara/RHEL, pacman no Arch/Manjaro/CachyOS, zypper no openSUSE, xbps no Void,
+  eopkg no Solus). Quando o yt-dlp ou o JavaScript runtime da distro sao antigos, em sistema imutavel (Bazzite,
+  Silverblue, SteamOS) ou sem sudo, baixa as versoes oficiais do yt-dlp, do Deno e do ffmpeg para `~/.local/bin` e
+  `~/.deno/bin`. No NixOS mostra o comando do `nix`; `--mostrar` so mostra o que faria.
+
+Depois e so abrir o Remix: ele acha os programas sozinho, sem reiniciar. Configuracoes > ONLINE mostra o que foi
+encontrado. Rode o instalador de novo de vez em quando: o YouTube muda e o yt-dlp precisa estar em dia.
+
+## Capas dos proprios arquivos
+
+A capa gravada dentro da musica (MP3/ID3, M4A/MP4, FLAC, OGG/Opus, WAV/AIFF) aparece sozinha: e
+extraida em segundo plano para `remix/art/` no cache (reduzida a 512 px). Prioridade: capa escolhida
+por voce > capa do arquivo > imagem da pasta (`cover.jpg` etc.). M4A tambem mostra titulo e artista.
+
+## Arquivos gerados
+
+- `config.ini` — modo, biblioteca, tema, volume, escalas, LED, autoplay, ordem, EQ, modo leve, pastas recentes.
+- `covers.ini` — caminho interno das capas personalizadas.
+- `artists.ini` — artistas editados a mao.
+- `order.ini` — ordem manual da playlist.
+- `assets/covers/` — copias das capas escolhidas pelo usuario.
+- `soundpad/` — sons do Soundpad (copias) e `soundpad.ini`.
+- `discord.ini` — opcoes e token do bot do Discord (permissao 600 no Linux; token protegido com DPAPI no Windows).
+- Conversoes do ffmpeg (formatos extras) viram WAV temporarios numa pasta de cache, apagados sozinhos depois de 72 h.
+
+## Compilacao
+
+Baixe o codigo com `git clone https://github.com/NinjaZinS2/Remix-Linux.git`.
+
+```bash
+bash linux/shell/fetch-deps.sh    # raylib 5.5 e o zig (compilador) em linux/third_party/
+bash linux/shell/build.sh         # -> linux/build/remix
+bash linux/shell/build.sh --debug # com simbolos, sem otimizacao
 ```
 
-## License
+O `build.sh` usa o **zig cc** quando existe (binario compativel com glibc >= 2.27, entao roda em
+distro antiga) e cai no `g++` do sistema com `REMIX_TOOLCHAIN=gcc`. O audio (miniaudio +
+stb_vorbis) e C puro e compila separado; o resto e um unico translation unit
+(`linux/shell/main_linux.cpp`), o que deixa o build simples e rapido.
 
-Remix Player is released under the [Apache License 2.0](LICENSE). Bundled third-party code keeps its own
-license: raylib and GLFW (zlib), miniaudio and stb (public domain / MIT), the QR encoder derived from Project Nayuki's
-QR Code generator (MIT), DejaVu fonts (Bitstream Vera) and
-Droid Sans Japanese (Apache 2.0). See [linux/packaging/copyright](linux/packaging/copyright). yt-dlp and ffmpeg
-are separate programs and are not distributed with Remix, and neither is cloudflared (Apache 2.0, used by Host).
+Pacotes:
 
-Please respect each platform's terms of service and the copyright law of your country: download only what
-you have the right to.
+```bash
+bash linux/shell/packaging/build-packages.sh   # .deb, .rpm, AppImage e o zip portatil em linux/dist/
+REMIX_VERSION=1.6.0 REMIX_RELEASE=2 bash linux/shell/packaging/build-packages.sh
+```
+
+> O `dnf`/`apt` nao troca um pacote pela mesma versao-release: ao entregar um build novo com a
+> mesma versao, suba o `REMIX_RELEASE`.
+
+## Host: ouvir as músicas do PC no celular (iPhone e Android)
+
+Ideia do Sodre para o Remix funcionar no **iPhone (iOS)** — e em qualquer celular — sem app de loja, enquanto a versão
+Android nativa é feita: o Remix do PC vira um **servidor** e o celular usa pelo navegador (dá para "adicionar à tela inicial").
+
+- **Vincular:** Configurações > HOST (ou o botão **HOST** no cabeçalho) > **LIGAR**. No celular, **escaneie o QR code** do
+  painel e digite só um nome — pronto. Sem o QR, abra o link, digite o **PIN** e aceite o aparelho no PC. O QR vale 10 min e
+  uma vez só (opção **QR PEDE ACEITE** para exigir confirmação no PC também).
+- **Você decide o que cada aparelho ouve:** por padrão um aparelho vinculado **não vê nada**. Libere a **BIBLIOTECA** por
+  aparelho, hosteie playlists (botão direito > "Hostear no celular"; todos ou alguns aparelhos) e libere, se quiser, as
+  playlists que um celular pediu para compartilhar. Cada celular tem as **playlists dele**, isoladas dos outros.
+- **Interface de app de música no celular:** Início, Buscar, Sua Biblioteca, tela da playlist com voltar, **Tocando agora**
+  em tela cheia e controles na tela de bloqueio, **efeitos e stems** aplicados pelo PC (o celular só toca o resultado,
+  então a tela bloqueada do iPhone continua funcionando) e **onda no ritmo** calculada pelo PC. Ajustada para o **Safari do iPhone**: todo botão reage ao toque, a barra
+  de posição funciona tocando ou arrastando em qualquer ponto, as folhas abrem o teclado e ficam acima dele, o play volta a
+  funcionar depois de um erro e a página do WhatsApp mostra os links até na pré-visualização do iPhone (sem JavaScript).
+- **Online no celular:** buscar e ouvir YouTube Music, YouTube e SoundCloud pelo celular — o **PC** roda o yt-dlp e o
+  ffmpeg e manda só o áudio; playlists do PC com músicas online também tocam. O celular nunca fala com esses sites.
+  Dá também para **colar um link de playlist ou álbum** (Spotify, YouTube, YouTube Music, Deezer, Apple Music,
+  SoundCloud, Bandcamp): o PC resolve e o celular salva tudo como playlist dele com um toque.
+- **Rede local e internet:** pelo mesmo roteador (Wi-Fi ou cabo) ou por um **túnel Cloudflare** (HTTPS, sem abrir porta,
+  atravessa CGNAT, sem entregar seu IP). O link do túnel **só aparece depois de testado** (evita o erro de DNS
+  `DNS_PROBE_POSSIBLE`) e tem botão **COPIAR LINK**; **NOVO LINK** gera outro. **HTML P/ WHATSAPP** gera uma página com os links.
+- **Segurança:** só aceita conexões locais ou do túnel (mesmo com IP público), autorização por aparelho e por música
+  (tirar a permissão corta na hora o que está tocando), aparelho sem "Lembrar" é temporário, trava contra adivinhar PIN/QR
+  (por origem e geral), CSRF/XSS e DNS rebinding bloqueados, limites contra DoS e pedidos lentos, IPv6 opcional e só na rede local.
+  Porta padrão **49875**. Detalhes, segurança e API em [linux/docs/HOST.md](linux/docs/HOST.md).
+
+## Soundpad: sons no seu microfone (só no PC)
+
+- Botão **SOUNDPAD** no cabeçalho (ou Configurações > SOUNDPAD E DISCORD): adicione sons (MP3, WAV, OGG e FLAC direto; M4A,
+  Opus, WMA e outros são convertidos) e toque **no seu microfone** para o Discord, jogos e chamadas. Clique toca/para,
+  teclas **1 a 9** com o painel aberto, volume por som, vários sons ao mesmo tempo, barra de progresso.
+- **Linux:** o Remix cria o microfone virtual **Remix Microfone** no PipeWire/PulseAudio (`pactl`) e ele some ao desligar.
+  **Windows:** usa o cabo virtual gratuito **VB-CABLE** (no Discord/jogo escolha "CABLE Output").
+- **Minha voz** vai junto (o Remix nunca captura o próprio microfone virtual, então não dá eco) e **ouvir no fone** é
+  opcional. Passo a passo em [linux/docs/SOUNDPAD.md](linux/docs/SOUNDPAD.md).
+
+## Bot de música do Discord (só no PC)
+
+- O **seu** bot no seu servidor: `/tocar` (nome ou link do YouTube, YouTube Music, SoundCloud, Spotify, Deezer, Apple Music),
+  `/buscar` com menu de escolha, `/playlist` (só as playlists que você liberar), `/fila`, `/agora`, `/pular`, `/efeito`
+  (slow, speed, reverb, grave, 8D) e mais — em português ou inglês conforme o Discord de cada pessoa.
+- **Quem faz o trabalho é o PC**, com os mesmos mecanismos do Remix (busca, links, playlists, efeitos); o bot em Node.js é
+  só a ponte com o Discord. Você decide: **fila pública**, **playlists para todos**, **músicas online**, **cargo DJ**,
+  **limite por pessoa** e **votação** (por padrão mais da metade da chamada para pular a música dos outros, pausar ou
+  parar) — ninguém atrapalha quem está ouvindo. Quem pediu a música pode pular a própria.
+- No PC, **▶ DISCORD em cima da capa** (card de música ou de playlist) toca na hora onde você está numa chamada; o painel
+  **DISCORD** mostra e controla o que toca em cada servidor. O Host do celular continua separado.
+- Precisa do **Node.js 22.12+** e do discord.js (instalador de dependências com a opção do Discord, ou **INSTALAR BOT** no
+  painel). O token fica protegido (DPAPI no Windows, arquivo só do seu usuário no Linux). Passo a passo, comandos e
+  segurança em [linux/docs/DISCORD.md](linux/docs/DISCORD.md).
+
+## Segurança de arquivos (planejado)
+
+Plano para proteger contra músicas com malware ou arquivos corrompidos — tocar só o que é reproduzível e a capa, higienizando o resto num processo isolado, sem quebrar o app — em [linux/docs/SEGURANCA-DE-ARQUIVOS.md](linux/docs/SEGURANCA-DE-ARQUIVOS.md). Ainda não implementado.
+
+## Android (em andamento)
+
+A estrutura para o porte Android (casca raylib reaproveitada, toolchain pinado em `third_party/android`, APK sem Gradle) esta em [linux/docs/ANDROID.md](linux/docs/ANDROID.md); o zip `docs/android-exemplo.zip` traz a pasta `android/` de exemplo.
+
+## Linux (portátil, .deb, .rpm e AppImage)
+
+A versao Linux vive em `linux/` (raylib) e compartilha com o Windows o nucleo inteiro que
+esta em `comum/`. A casca Windows e `windows/` (GDI+/WinHTTP). Guia completo em
+[linux/shell/README-LINUX.md](linux/shell/README-LINUX.md).
+
+Rodando de dentro da pasta do projeto, o app usa essa pasta como "casa" (`config.ini`,
+`assets/`, `Musica/`). `bash linux/RODAR.sh` compila sozinho se o codigo mudou e abre.
+
+```bash
+linux/shell/fetch-deps.sh            # raylib 5.5 (+ patch do GLFW) + zig + headers X11/Wayland, tudo em third_party/ (sem root)
+linux/shell/build.sh                 # -> build/remix e ./remix
+linux/shell/packaging/build-packages.sh   # -> dist/*.deb, dist/*.rpm, dist/*-portable.zip e dist/Remix-*.AppImage
+linux/shell/build-appimage.sh        # so o AppImage (um arquivo que roda em qualquer distro)
+```
+
+O binario exige so glibc >= 2.27 (Ubuntu 18.04+, Debian 10+, Fedora, etc.).
+Instalado pelo pacote, usa `~/.config/remix/` para config/capas; com um
+`config.ini` ao lado do binario ele roda em modo portatil.

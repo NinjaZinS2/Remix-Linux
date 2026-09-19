@@ -87,24 +87,24 @@ static void RxDrawSide(Color ab,Color white,Color gray){
     // lista: "Todas as músicas" e depois cada playlist
     for(size_t i=0;i<R_rxSidePl.size();i++){
         RECT r=R_rxSidePl[i]; RectF b=RF(r);
-        bool sel = i==0 ? (g_rxPag==RXP_LISTA&&g_view==0)
-                        : (g_rxPag==RXP_LISTA&&g_view==2&&g_openPl==(int)i-1);
+        // a lista vem ordenada pelo uso: g_rxSideOrdem diz qual playlist e cada linha
+        int pl = i<g_rxSideOrdem.size()?g_rxSideOrdem[i]:-1;
+        if(pl>=(int)g_playlists.size()) continue;
+        bool sel = pl<0 ? (g_rxPag==RXP_LISTA&&g_view==0)
+                        : (g_rxPag==RXP_LISTA&&g_view==2&&g_openPl==pl);
         if(sel||UiHot(r)){ Color bg=ToGdi(sel?UI().surfaceHi:UI().surface); DrawRoundRect(b,S(UI_R_CARD),&bg,nullptr); }
         float cv=b.Height-S(10);
         RectF art(b.X+S(6),b.Y+S(5),cv,cv);
         Color plate=ToGdi(UI().bg);
-        if(i==0){
+        if(pl<0){
             DrawRoundRect(art,S(4),&plate,nullptr);
             RxIconLista(RectF(art.X+S(3),art.Y+S(3),art.Width-S(6),art.Height-S(6)),ab);
-        } else {
-            const Playlist& pl=g_playlists[i-1];
-            RxCapa(art,L"",pl.coverPath,false,plate);
-        }
+        } else RxCapa(art,L"",g_playlists[(size_t)pl].coverPath,false,plate);
         float tx=art.X+cv+S(9), tw=b.Width-(tx-b.X)-S(8);
-        std::wstring nome = i==0?L"Todas as músicas":g_playlists[i-1].name;
+        std::wstring nome = pl<0?L"Todas as músicas":g_playlists[(size_t)pl].name;
         std::wstring sub;
-        if(i==0) sub=std::to_wstring(g_libCached?g_libTracks.size():g_tracks.size())+L" músicas";
-        else sub=L"Playlist  ·  "+std::to_wstring(g_playlists[i-1].entries.size())+L" músicas";
+        if(pl<0) sub=std::to_wstring(g_libCached?g_libTracks.size():g_tracks.size())+L" músicas";
+        else sub=L"Playlist  ·  "+std::to_wstring(g_playlists[(size_t)pl].entries.size())+L" músicas";
         gfx::TextRect(nome,RectF(tx,b.Y+S(6),tw,S(17)),S(12),sel?ab:white,false,gfx::Near,false,gfx::EllipsisChar);
         gfx::TextRect(sub,RectF(tx,b.Y+S(23),tw,S(14)),S(10),gray,false,gfx::Near,false,gfx::EllipsisChar);
     }
@@ -379,6 +379,7 @@ static void RxDrawPainel(Color ab,Color white,Color gray){
 
 // ------------------------------------------------- cabecalho da biblioteca --
 static std::wstring RxNomeDaPagina(){
+    if(!g_searchBuf.empty()) return L"Buscando";
     if(g_view==2){ const Playlist* p=OpenPlaylistPtr(); if(p) return p->name; return L"Playlist"; }
     if(g_view==1) return L"Playlists";
     return L"Todas as músicas";
@@ -389,8 +390,21 @@ static void RxDrawCabecalho(Color ab,Color white,Color gray){
     gfx::TextRect(RxNomeDaPagina(),RectF(b.X,b.Y,b.Width-S(250),S(32)),S(24),white,true,gfx::Near,true,gfx::EllipsisChar);
     size_t n=g_visible.size();
     std::wstring sub=std::to_wstring(n)+(n==1?L" música":L" músicas");
-    if(!g_searchBuf.empty()) sub+=L"  ·  filtrando por \""+g_searchBuf+L"\"";
+    if(!g_searchBuf.empty()) sub=n?(std::to_wstring(n)+(n==1?L" música aqui para \"":L" músicas aqui para \"")+g_searchBuf+L"\""):
+                                  (L"Nada na sua biblioteca para \""+g_searchBuf+L"\"  ·  ENTER procura online");
     gfx::TextRect(sub,RectF(b.X,b.Y+S(38),b.Width-S(250),S(18)),S(11),gray,false,gfx::Near,true,gfx::EllipsisChar);
+    if(R_rxBuscarOn.right>R_rxBuscarOn.left&&!g_searchBuf.empty()){
+        // digitando: dá para levar a mesma busca para fora da biblioteca
+        struct B{ const RECT* r; const wchar_t* t; };
+        B bs[3]={{&R_rxBuscarOn,L"MÚSICAS ONLINE"},{&R_rxBuscaPl,L"PLAYLISTS"},{&R_rxBuscaAl,L"ÁLBUNS"}};
+        for(auto& b:bs){
+            if(b.r->right<=b.r->left) continue;
+            RectF rr=RF(*b.r);
+            Color bg=ToGdi(UiHot(*b.r)?UI().surfaceHi:UI().surface);
+            DrawRoundRect(rr,rr.Height/2.f,&bg,nullptr);
+            gfx::TextRect(b.t,rr,S(10),UiHot(*b.r)?white:gray,true,gfx::Center,true,gfx::EllipsisChar);
+        }
+    }
     if(R_rxTocar.right>R_rxTocar.left){
         RectF t=RF(R_rxTocar);
         Color bg=ab; DrawRoundRect(t,t.Height/2.f,&bg,nullptr);
@@ -432,7 +446,7 @@ static void RxDrawBusca(Color ab,Color white,Color gray){
     Color bg=ToGdi(UI().surface), pn=ToGdi(g_searchFocus?UI().borderHi:UI().border);
     DrawRoundRect(b,b.Height/2.f,&bg,&pn,1.2f);
     RxIconLupa(RectF(b.X+S(10),b.Y+S(9),S(18),S(18)),g_searchFocus?white:gray);
-    std::wstring txt=g_searchBuf.empty()?L"Buscar na sua biblioteca":g_searchBuf;
+    std::wstring txt=g_searchBuf.empty()?L"Buscar música, artista, playlist ou colar um link":g_searchBuf;
     gfx::TextRect(txt,RectF(b.X+S(36),b.Y,b.Width-S(70),b.Height),S(12),g_searchBuf.empty()?gray:white,false,gfx::Near,true,gfx::EllipsisChar);
     if(g_searchFocus&&(NowMs()/500)%2==0){
         float tw=gfx::TextWidth(g_searchBuf,S(12),false);

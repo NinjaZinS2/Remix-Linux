@@ -156,6 +156,8 @@ static int HitTest(int x,int y){
         if(R_rxTocar.right>R_rxTocar.left&&PtIn(R_rxTocar,x,y)) return Z_RX_TOCAR;
         if(R_rxVoltar.right>R_rxVoltar.left&&PtIn(R_rxVoltar,x,y)) return Z_RX_VOLTAR;
         if(R_rxBuscarOn.right>R_rxBuscarOn.left&&PtIn(R_rxBuscarOn,x,y)) return Z_RX_BUSCARON;
+        if(R_rxBuscaPl.right>R_rxBuscaPl.left&&PtIn(R_rxBuscaPl,x,y)) return Z_RX_BUSCAPL;
+        if(R_rxBuscaAl.right>R_rxBuscaAl.left&&PtIn(R_rxBuscaAl,x,y)) return Z_RX_BUSCAAL;
         if(R_rxAleat.right>R_rxAleat.left&&PtIn(R_rxAleat,x,y)) return Z_RX_ALEATORIO;
         for(size_t i=0;i<R_rxSidePl.size();i++) if(PtIn(R_rxSidePl[i],x,y)) return Z_RX_SIDE_BASE+(int)i;
         if(g_rxPag!=RXP_LISTA&&PtIn(R_rxMain,x,y)){
@@ -441,7 +443,13 @@ static void OnLButtonDown(int x,int y){
         return;
     }
     if(id==Z_RX_VOLTAR){ g_rxGenero.clear(); g_rxGeneroNome.clear(); g_rxScroll=0; BuildLayout(); return; }
-    if(id==Z_RX_BUSCARON){ OpenOnlineSearch(-1,L""); return; }
+    if(id==Z_RX_BUSCARON){ OU().tipo=0; OpenOnlineSearch(-1,g_searchBuf); return; }
+    if(id==Z_RX_BUSCAPL||id==Z_RX_BUSCAAL){
+        OU().tipo=(id==Z_RX_BUSCAPL)?1:2;
+        { std::lock_guard<std::mutex> lk(OU().m); OU().res.clear(); OU().listas.clear(); }
+        OpenOnlineSearch(-1,g_searchBuf);
+        return;
+    }
     if(id==Z_RX_TOCAR||id==Z_RX_ALEATORIO){
         bool al=(id==Z_RX_ALEATORIO);
         if(g_tracks.empty()){ SetStatus(g_view==2?L"Playlist vazia.":L"Biblioteca vazia.",2500); return; }
@@ -614,7 +622,7 @@ static void OnChar(int c){ // so caracteres imprimiveis
     if(wb.open&&wb.editing){ if(c>=32&&c!=127&&(int)wb.query.size()<120)wb.query.push_back((wchar_t)c); return; }
     if(OU().open){ if(OU().editing&&c>=32&&c!=127&&(int)OU().query.size()<300) OU().query.push_back((wchar_t)c); return; }
     if(g_editArtist){ if(g_editMode==7&&(c<'0'||c>'9')) return; if(g_editMode==6&&(c<'0'||c>'9')) return; if(c>=32&&c!=127&&(int)g_editBuf.size()<(g_editMode==1?120:(g_editMode>=4?800:64))) g_editBuf.push_back((wchar_t)c); return; }
-    if(g_searchFocus){ if(c>=32&&c!=127&&(int)g_searchBuf.size()<60){ g_searchBuf.push_back((wchar_t)c); BuildLayout(); } return; }
+    if(g_searchFocus){ if(c>=32&&c!=127&&(int)g_searchBuf.size()<60){ g_searchBuf.push_back((wchar_t)c); if(RxOn()&&g_view==1) EnterLibraryView(); BuildLayout(); } return; }
 }
 // Tecla pressionada com a janela em foco. kc = KeyCode (app_keys.h), mods = KM_*.
 // Enter/Esc/Backspace dos editores e da busca sao fixos; o resto passa pelos atalhos configuraveis.
@@ -661,7 +669,13 @@ static void OnKeyEvent(int kc,int mods){
     }
     if(g_searchFocus){
         if(kc==KC_ESC){ ClearSearch(); return; }
-        if(kc==KC_ENTER){ g_searchFocus=false; if(!g_visible.empty()){ if(g_pickMode) TogglePick(g_visible[0]); else PlayIndex(g_visible[0],true); } return; }
+        if(kc==KC_ENTER){
+            // sem nada na biblioteca (ou um link colado): a busca continua online
+            if(RxOn()&&!g_searchBuf.empty()&&(g_visible.empty()||IsUrlText(Config::Trim(g_searchBuf)))){
+                g_searchFocus=false; OU().tipo=0; OpenOnlineSearch(-1,g_searchBuf); return;
+            }
+            g_searchFocus=false; if(!g_visible.empty()){ if(g_pickMode) TogglePick(g_visible[0]); else PlayIndex(g_visible[0],true); } return;
+        }
         if(kc=='V'&&(mods&KM_CTRL)){ std::wstring c=clip(600); if(IsUrlText(c)){ ClearSearch(); OpenOnlineSearch(g_view==2?g_openPl:-1,c); } else { g_searchBuf+=c; if(g_searchBuf.size()>60) g_searchBuf.resize(60); BuildLayout(); } return; }
         if(kc==KC_BACKSPACE){ if(!g_searchBuf.empty()){ g_searchBuf.pop_back(); BuildLayout(); } return; }
         if(!(mods&(KM_CTRL|KM_ALT))) return;   // digitando: letras vao para a busca (OnChar), nao para os atalhos
@@ -716,6 +730,27 @@ static void RunAction(const std::string& a){
     else if(a=="tunnel:on"){host::TunnelStart(g_cfg.hostPort);}
     else if(a.rfind("hostlib:",0)==0){ int i=atoi(a.c_str()+8); host::View v=host::GetView(); if(i>=0&&i<(int)v.devs.size()) host::SetDeviceLib(v.devs[(size_t)i].id,a.back()!='0'); }   // hostlib:<aparelho>:<0|1>
     else if(a.rfind("ontab:",0)==0){ OU().tipo=std::max(0,std::min(2,atoi(a.c_str()+6))); { std::lock_guard<std::mutex> lk(OU().m); OU().res.clear(); OU().listas.clear(); } }
+    else if(a=="onaddall"){ OnlineAddAll(400,300); }
+    else if(a=="ondump"){
+        std::lock_guard<std::mutex> lk(OU().m);
+        fprintf(stderr,"[remix] listas: %d\n",(int)OU().listas.size());
+        int dz=0,yt=0;
+        for(auto& it:OU().listas){ if(it.link.find(L"youtube")!=std::wstring::npos) yt++; else dz++; }
+        fprintf(stderr,"[remix]   deezer=%d youtube=%d\n",dz,yt);
+        for(size_t i=0;i<OU().listas.size()&&i<3;i++) fprintf(stderr,"[remix]   %s | %s\n",WideToUtf8(OU().listas[i].titulo).c_str(),WideToUtf8(OU().listas[i].link).c_str());
+        for(size_t i=OU().listas.size()>3?OU().listas.size()-2:3;i<OU().listas.size();i++) fprintf(stderr,"[remix]   %s | %s\n",WideToUtf8(OU().listas[i].titulo).c_str(),WideToUtf8(OU().listas[i].link).c_str());
+    }
+    else if(a.rfind("onabrir:",0)==0){   // abre o N-esimo resultado de playlist/album
+        size_t i=(size_t)atoi(a.c_str()+8); std::wstring link;
+        { std::lock_guard<std::mutex> lk(OU().m); if(i<OU().listas.size()) link=OU().listas[i].link; }
+        if(!link.empty()){ OU().tipo=0; OU().query=link; OnlineSearchAsync(); }
+    }
+    else if(a.rfind("rxside:",0)==0){ int i=atoi(a.c_str()+7); OnLButtonDown((int)((R_rxSidePl[(size_t)std::min<size_t>((size_t)std::max(0,i),R_rxSidePl.size()-1)].left+R_rxSidePl[(size_t)std::min<size_t>((size_t)std::max(0,i),R_rxSidePl.size()-1)].right)/2),(int)((R_rxSidePl[(size_t)std::min<size_t>((size_t)std::max(0,i),R_rxSidePl.size()-1)].top+R_rxSidePl[(size_t)std::min<size_t>((size_t)std::max(0,i),R_rxSidePl.size()-1)].bottom)/2)); }
+    else if(a=="plaberta"){ const Playlist* p=OpenPlaylistPtr(); fprintf(stderr,"[remix] aberta: %s (%d itens)\n",p?WideToUtf8(p->name).c_str():"(nenhuma)",p?(int)p->entries.size():0); }
+    else if(a=="pldump"){
+        fprintf(stderr,"[remix] playlists (%d):\n",(int)g_playlists.size());
+        for(auto& p:g_playlists) fprintf(stderr,"[remix]   \"%s\" slug=%s itens=%d link=%s\n",WideToUtf8(p.name).c_str(),WideToUtf8(p.slug).c_str(),(int)p.entries.size(),WideToUtf8(p.link).c_str());
+    }
     else if(a.rfind("onbusca:",0)==0){ OU().open=true; OU().query=Utf8ToWide(a.substr(8)); OnlineSearchAsync(); }
     else if(a=="letra"){ g_rxLetraOn=!g_rxLetraOn; g_rxLetraScroll=0; BuildLayout(); }
     else if(a=="rxpainel"){ g_rxPainelOn=!g_rxPainelOn; BuildLayout(); }

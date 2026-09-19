@@ -1,41 +1,29 @@
-# Gerados pelos scripts (os pacotes prontos ficam nas Releases do GitHub)
-/build/
-/dist/
-/third_party/
+# Tudo do Remix Linux fica em linux/. A raiz fica livre para outras versões
+# (por exemplo uma pasta windows/ no futuro).
 
-# Binarios compilados
-/linux/remix
-/windows/Remix.exe
-/windows/audio_backend.o
-/windows/*_novo.o
-/Remix.exe
-/remix
+# Gerados pelos scripts (os pacotes prontos ficam nas Releases do GitHub)
+/linux/build/
+/linux/dist/
+/linux/third_party/
+
+# Binario compilado
+/linux/shell/remix
 *.AppImage
 
 # Dados do app no modo portatil (criados na primeira execucao)
-/config.ini
-/covers.ini
-/artists.ini
-/order.ini
-/playlists/
-/assets/covers/
-/Musica/*
-!/Musica/LEIA-ME.txt
-
-# Diagnostico do Windows e ferramentas instaladas a mao (criados ao lado do app)
-/remix-log*.txt
-/remix-abrindo.tmp
-/tools/
-/assets/tools/
-
-# Biblioteca de teste local (musicas com direitos autorais)
-/test/
+/linux/config.ini
+/linux/covers.ini
+/linux/artists.ini
+/linux/order.ini
+/linux/playlists/
+/linux/host.ini
+/linux/gostos.ini
+/linux/letras/
+/linux/soundpad/
+/linux/discord.ini
+/linux/Musica/
+/linux/assets/covers/
 
 # Editores e sistema
-.vscode/
-.idea/
 *.swp
-*~
 .DS_Store
-Thumbs.db
-desktop.ini

@@ -441,6 +441,11 @@ static void DrawOnline(int w,int h){
         gfx::PopClip();
     }
     { RectF sb=RF(u.btnSearch); Color f=Cs(ToGdi(g_theme.accent,55),g_theme.accent), fp=ToGdi(g_theme.accent); DrawRoundRect(sb,S(9),&f,&fp,1.4f); Color tc=UiClassic()?ab:ToGdi(UI().bg); if(u.busy.load()) DrawSpinner(sb.X+sb.Width/2,sb.Y+sb.Height/2,S(9),tc,S(2.5f)); else gfx::TextRect(L"BUSCAR",sb,S(12),tc,true,gfx::Center,true); }
+    if(u.tipo==1&&!u.busy.load()){
+        std::lock_guard<std::mutex> lk(u.m);
+        if(u.listas.empty()) gfx::TextRect(L"Playlists do Deezer e do YouTube. Do Spotify, Apple Music ou SoundCloud: cole o link aqui em cima.",
+            RectF((float)u.box.left+S(16),(float)u.tab[0].bottom+S(6),(float)(u.box.right-u.box.left)-S(32),S(18)),S(10),C_GRAY,false,gfx::Near,true,gfx::EllipsisChar);
+    }
     static const wchar_t* tabN[3]={L"MÚSICAS",L"PLAYLISTS",L"ÁLBUNS"};
     for(int i=0;i<3;i++) DrawPill(u.tab[i],tabN[i],u.tipo==i,S(10));
     static const wchar_t* srcN[3]={L"YOUTUBE MUSIC",L"YOUTUBE",L"SOUNDCLOUD"};
@@ -467,6 +472,14 @@ static void DrawOnline(int w,int h){
             float tx=art.X+cv+S(12);
             gfx::TextRect(it.titulo,RectF(tx,row.Y+S(10),row.Width-(tx-row.X)-S(120),S(20)),S(13),C_WHITE,true,gfx::Near,false,gfx::EllipsisChar);
             gfx::TextRect(it.sub,RectF(tx,row.Y+S(30),row.Width-(tx-row.X)-S(120),S(17)),S(10),C_GRAY,false,gfx::Near,false,gfx::EllipsisChar);
+            {   // de onde veio a lista, e o "abrir" quando o mouse passa
+                const wchar_t* fonte = it.link.find(L"youtube")!=std::wstring::npos?L"YOUTUBE":
+                                       (it.link.find(L"deezer")!=std::wstring::npos?L"DEEZER":L"ONLINE");
+                RectF fr(row.X+row.Width-S(196),row.Y+row.Height/2-S(9),S(76),S(18));
+                Color pill=Cs(Argb(255,24,27,44),UI().surfaceHi);
+                DrawRoundRect(fr,S(9),&pill,nullptr);
+                gfx::TextRect(fonte,fr,S(8.5f),C_GRAY,true,gfx::Center,true);
+            }
             gfx::TextRect(hot?L"ABRIR ▸":L"",RectF(row.X+row.Width-S(110),row.Y,S(100),row.Height),S(10),ToGdi(g_theme.accent),true,gfx::Far,true);
         }
         RxBaixarCapasPendentes();

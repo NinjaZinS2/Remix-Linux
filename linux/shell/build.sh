@@ -1,20 +1,20 @@
 #!/usr/bin/env bash
-# Compila o Remix para Linux -> build/remix (e copia para linux/remix)
-# Codigo comum aos dois sistemas em comum/, casca Linux em linux/.
-#   linux/build.sh            build otimizado
-#   linux/build.sh --debug    com simbolos e sem otimizacao
-#   linux/build.sh --no-wayland   raylib so com X11
-#   REMIX_TOOLCHAIN=gcc linux/build.sh   forca o g++ do sistema (padrao: zig se
+# Compila o Remix para Linux -> build/remix (e copia para shell/remix)
+# Codigo comum aos dois sistemas em comum/, casca Linux em shell/.
+#   shell/build.sh            build otimizado
+#   shell/build.sh --debug    com simbolos e sem otimizacao
+#   shell/build.sh --no-wayland   raylib so com X11
+#   REMIX_TOOLCHAIN=gcc shell/build.sh   forca o g++ do sistema (padrao: zig se
 #                                        existir em third_party/zig -> binario
 #                                        compativel com glibc >= REMIX_GLIBC, 2.27)
-# Dependencias: zig (linux/fetch-deps.sh baixa) OU g++ com C++20; headers
-# X11/Wayland (pacotes -devel do sistema OU o sysroot de linux/fetch-deps.sh).
+# Dependencias: zig (shell/fetch-deps.sh baixa) OU g++ com C++20; headers
+# X11/Wayland (pacotes -devel do sistema OU o sysroot de shell/fetch-deps.sh).
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 SYSROOT="$ROOT/third_party/sysroot"
 RL="$ROOT/third_party/raylib-5.5/src"
-[ -d "$RL" ] || { echo "raylib nao encontrado em third_party/. Rode: linux/fetch-deps.sh"; exit 1; }
+[ -d "$RL" ] || { echo "raylib nao encontrado em third_party/. Rode: shell/fetch-deps.sh"; exit 1; }
 
 DEBUG=0
 for a in "$@"; do
@@ -30,7 +30,7 @@ if [ "$TOOLCHAIN" = auto ]; then if [ -x "$ZIG" ]; then TOOLCHAIN=zig; else TOOL
 export REMIX_TOOLCHAIN="$TOOLCHAIN"
 if [ "$TOOLCHAIN" = zig ]; then RL_LIB="build/raylib-zig/libraylib.a"; else RL_LIB="build/raylib/libraylib.a"; fi
 for a in "$@"; do [ "$a" = --rebuild-raylib ] && rm -f "$RL_LIB"; done
-[ -f "$RL_LIB" ] || bash linux/build-raylib.sh
+[ -f "$RL_LIB" ] || bash shell/build-raylib.sh
 mkdir -p build
 
 OPT="-O2"; [ "$DEBUG" = 1 ] && OPT="-O0 -g"
@@ -42,12 +42,12 @@ if [ "$TOOLCHAIN" = zig ]; then CCC=("$ZIG" cc -target "x86_64-linux-gnu.$GLIBC_
 if [ "$TOOLCHAIN" = zig ]; then
   # zig: libc++ estatica embutida, glibc alvo fixa (nada de shims).
   CXX=("$ZIG" c++ -target "x86_64-linux-gnu.$GLIBC_TARGET" -fno-sanitize=undefined)
-  SOURCES=(linux/main_linux.cpp build/audio_backend.o)
+  SOURCES=(shell/main_linux.cpp build/audio_backend.o)
   LINK=(-lm -lpthread -ldl)
   echo "[remix] compilando com zig (glibc >= $GLIBC_TARGET, debug=$DEBUG)"
 else
   CXX=("${CXX:-g++}")
-  SOURCES=(linux/main_linux.cpp build/audio_backend.o -fno-builtin linux/compat_glibc.cpp)
+  SOURCES=(shell/main_linux.cpp build/audio_backend.o -fno-builtin shell/compat_glibc.cpp)
   # libstdc++ estatica: a do sistema (pacote libstdc++-static) ou a extraida no sysroot.
   LIBDIRS=()
   sys_a="$("${CXX[@]}" -print-file-name=libstdc++.a)"
@@ -65,7 +65,7 @@ fi
 "${CXX[@]}" -std=gnu++20 $OPT -Wall -Wextra -Wno-unused-parameter -Wno-unused-function \
   -Wno-missing-field-initializers -Wno-sign-compare -Wno-unused-variable -Wno-unused-but-set-variable \
   "${INC[@]}" -o build/remix "${SOURCES[@]}" "$RL_LIB" "${LINK[@]}"
-cp build/remix linux/remix && chmod +x linux/remix   # binario pronto na pasta linux/ (RODAR.sh)
-command -v strip >/dev/null && strip --strip-unneeded linux/remix || true
+cp build/remix shell/remix && chmod +x shell/remix   # binario pronto na pasta shell/ (RODAR.sh)
+command -v strip >/dev/null && strip --strip-unneeded shell/remix || true
 echo "[remix] ok -> build/remix ($(du -h build/remix | cut -f1))"
 echo "[remix] glibc minima exigida: $(objdump -T build/remix | grep -oE 'GLIBC_[0-9.]+' | sort -t. -k2,2n -k3,3n -u | tail -1)"

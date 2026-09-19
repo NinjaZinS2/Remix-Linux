@@ -253,6 +253,38 @@ inline bool OnlineSearch(const std::wstring& q, int where, std::vector<OTrack>& 
     if (out.empty()) err = r.code == 0 ? std::wstring(L"Nada encontrado.") : OErr(r, L"A busca falhou.");
     return !out.empty();
 }
+// Procura PLAYLISTS no YouTube (a busca normal so traz musica solta). O filtro
+// "sp=EgIQAw%3D%3D" da pagina de resultados e o "somente playlists"; o yt-dlp le
+// essa pagina e devolve uma entrada por playlist.
+struct OLista { std::wstring titulo, sub, capa, link; int n = 0; };
+inline bool BuscarPlaylistsYoutube(const std::wstring& q, std::vector<OLista>& out, int limit, const std::atomic<bool>* cancel) {
+    EnsureTools();
+    if (!YtdlpOk() || q.empty()) return false;
+    auto a = YtdlpArgs();
+    a.push_back(L"-J"); a.push_back(L"--flat-playlist");
+    a.push_back(L"--playlist-items"); a.push_back(L"1:" + std::to_wstring(limit));
+    a.push_back(L"https://www.youtube.com/results?search_query=" + Utf8ToWide(OUrlEnc(q)) + L"&sp=EgIQAw%253D%253D");
+    std::string all;
+    CapResult r = RunCapture(a, 60000, cancel, [&](const std::string& ln) { all += ln; });
+    if (r.canceled || all.empty()) return false;
+    JVal v; if (!OParse(all, v) || v.t != JVal::OBJ) return false;
+    const JVal* ent = v.get("entries");
+    if (!ent || ent->t != JVal::ARR) return false;
+    for (auto& e : ent->a) {
+        if ((int)out.size() >= limit) break;
+        if (e.t != JVal::OBJ) continue;
+        OLista L;
+        L.titulo = Utf8ToWide(JS(e, "title"));
+        L.link = Utf8ToWide(JS(e, "url"));
+        if (L.link.empty()) { std::string id = JS(e, "id"); if (!id.empty()) L.link = L"https://www.youtube.com/playlist?list=" + Utf8ToWide(id); }
+        L.n = (int)e.num("playlist_count", 0);
+        std::wstring canal = Utf8ToWide(JS(e, "channel")); if (canal.empty()) canal = Utf8ToWide(JS(e, "uploader"));
+        L.sub = L.n > 0 ? (std::to_wstring(L.n) + L" músicas" + (canal.empty() ? L"" : L"  ·  " + canal)) : (canal.empty() ? std::wstring(L"YouTube") : canal);
+        if (const JVal* th = e.get("thumbnails"); th && th->t == JVal::ARR && !th->a.empty()) L.capa = Utf8ToWide(JS(th->a.back(), "url"));
+        if (!L.titulo.empty() && !L.link.empty() && L.link.find(L"list=") != std::wstring::npos) out.push_back(L);
+    }
+    return !out.empty();
+}
 // Acha a musica tocavel (YouTube Music; senao YouTube pela duracao mais parecida).
 inline bool MatchOnYouTube(OTrack& t, std::wstring& err, const std::atomic<bool>* cancel) {
     if (!t.play.empty() && !NeedsMatch(DetectSource(t.play))) return true;

@@ -207,7 +207,7 @@ enum : int {
     // Estilo REMIX (1.6): lateral, tela inicial com fileiras e player embaixo.
     Z_RX_NAV_BASE=30000,          // +3: Início / Buscar / Sua biblioteca
     Z_RX_NOVAPL=30010, Z_RX_ATUALIZAR, Z_RX_FILA, Z_RX_VERTODAS, Z_RX_TOCAR, Z_RX_ALEATORIO, Z_RX_VOLTAR, Z_RX_BUSCARON, Z_RX_SIDEDRAG,
-    Z_RX_LETRA=30030, Z_RX_SAIDA, Z_RX_PAINEL, Z_RX_HERO, Z_RX_LETRA_LINHA_BASE=30200,   // +200: clicar numa linha da letra pula para ela
+    Z_RX_LETRA=30030, Z_RX_SAIDA, Z_RX_PAINEL, Z_RX_HERO, Z_RX_BUSCAPL, Z_RX_BUSCAAL, Z_RX_LETRA_LINHA_BASE=30200,   // +200: clicar numa linha da letra pula para ela
     Z_RX_ATALHO_BASE=30100,       // +16: atalhos do topo do Início (mais ouvidos)
     Z_RX_SIDE_BASE=31000,         // +500: itens da lateral (0 = todas as músicas, depois as playlists)
     Z_RX_CARD_BASE=32000,         // +4000: cartões da tela inicial
@@ -281,9 +281,15 @@ static RECT R_rxNav[3];                    // Início / Descobrir / Sua bibliote
 static RECT R_rxNovaPl{0,0,0,0}, R_rxAtualizar{0,0,0,0}, R_rxVerTodas{0,0,0,0};
 static RECT R_rxCab{0,0,0,0}, R_rxTocar{0,0,0,0}, R_rxAleat{0,0,0,0};   // cabecalho da pagina da biblioteca/playlist
 static RECT R_rxVoltar{0,0,0,0}, R_rxBuscarOn{0,0,0,0};   // cabecalho da pagina Descobrir
+static RECT R_rxBuscaPl{0,0,0,0}, R_rxBuscaAl{0,0,0,0};    // com texto na busca: procurar online, playlists e albuns
 static std::wstring g_rxGenero, g_rxGeneroNome;           // genero aberto na pagina Descobrir (vazio = grade de generos)
 static std::vector<RECT> R_rxSidePl;       // 0 = "Todas as músicas", depois as playlists (mais usadas primeiro)
 static std::vector<int> g_rxSideOrdem;     // item da lateral -> índice real da playlist (-1 = todas as músicas)
+// A ordem por uso e congelada: recalcular a cada clique fazia a lista "pular"
+// debaixo do cursor (abrir uma playlist ja conta como uso). So muda quando a
+// lista de playlists muda (criar, apagar, renomear) ou ao abrir o app.
+static std::wstring g_rxOrdemAss;          // assinatura da lista de playlists
+static std::vector<int> g_rxOrdemFixa;
 static RECT R_rxSideDrag{0,0,0,0};         // divisória: arrasta para mudar a largura da lateral
 // Atalhos do topo do Início: o que você mais ouviu por último (playlists e músicas).
 struct RxAtalho { RECT r{0,0,0,0}; int tipo=0; int idx=0; std::wstring nome, sub, capa; };

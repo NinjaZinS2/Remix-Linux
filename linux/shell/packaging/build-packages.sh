@@ -4,14 +4,14 @@
 #   dist/remix-<ver>-<rel>.x86_64.rpm  (Fedora, Nobara, RHEL-like)
 #   dist/Remix-<ver>-x86_64.AppImage    (qualquer distro: um arquivo so)
 # Requer: dpkg-deb (pacote dpkg) e rpmbuild (pacote rpm-build). Nao precisa de root.
-#   REMIX_VERSION=1.6.0 REMIX_RELEASE=1 linux/packaging/build-packages.sh
+#   REMIX_VERSION=1.6.0 REMIX_RELEASE=1 shell/packaging/build-packages.sh
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
 VER="${REMIX_VERSION:-1.6.0}"
 REL="${REMIX_RELEASE:-1}"
 ARCH_DEB=amd64
-[ -x build/remix ] || bash linux/build.sh
+[ -x build/remix ] || bash shell/build.sh
 # Arquivo de texto enviado pelo site do GitHub a partir do Windows chega com CRLF. O .rpm (spec),
 # o .deb (control), o .desktop e os scripts .sh quebram com isso: todo texto que entra num pacote
 # passa por aqui sem o \r. Uso: semcr <modo> <origem> <destino>
@@ -30,10 +30,10 @@ install -Dm644 assets/branding/open.wav   "$STAGE/usr/share/remix/assets/brandin
 install -Dm644 assets/branding/icon.png   "$STAGE/usr/share/remix/assets/branding/icon.png"
 for f in assets/fonts/*.ttf; do install -Dm644 "$f" "$STAGE/usr/share/remix/assets/fonts/$(basename "$f")"; done
 for f in assets/themes/*.ini; do semcr 644 "$f" "$STAGE/usr/share/remix/assets/themes/$(basename "$f")"; done
-semcr 644 linux/remix.desktop "$STAGE/usr/share/applications/remix.desktop"
-for d in linux/icons/*/; do sz="$(basename "$d")"; install -Dm644 "$d/remix.png" "$STAGE/usr/share/icons/hicolor/$sz/apps/remix.png"; done
-semcr 644 linux/README-LINUX.md "$STAGE/usr/share/doc/remix/README-LINUX.md"
-semcr 644 linux/packaging/copyright "$STAGE/usr/share/doc/remix/copyright"
+semcr 644 shell/remix.desktop "$STAGE/usr/share/applications/remix.desktop"
+for d in shell/icons/*/; do sz="$(basename "$d")"; install -Dm644 "$d/remix.png" "$STAGE/usr/share/icons/hicolor/$sz/apps/remix.png"; done
+semcr 644 shell/README-LINUX.md "$STAGE/usr/share/doc/remix/README-LINUX.md"
+semcr 644 shell/packaging/copyright "$STAGE/usr/share/doc/remix/copyright"
 [ -f /usr/share/licenses/dejavu-sans-fonts/LICENSE ] && install -Dm644 /usr/share/licenses/dejavu-sans-fonts/LICENSE "$STAGE/usr/share/doc/remix/licenses/DejaVu-LICENSE" || true
 [ -f /usr/share/licenses/google-droid-sans-fonts/NOTICE ] && install -Dm644 /usr/share/licenses/google-droid-sans-fonts/NOTICE "$STAGE/usr/share/doc/remix/licenses/Droid-NOTICE" || true
 mkdir -p dist
@@ -45,7 +45,7 @@ if command -v dpkg-deb >/dev/null; then
   cp -a "$STAGE/." "$DEB/"
   mkdir -p "$DEB/DEBIAN"
   SIZE_KB="$(du -sk --exclude=DEBIAN "$DEB" | cut -f1)"
-  tr -d '\r' < linux/packaging/deb/control.in | sed -e "s/@VERSION@/$VER-$REL/" -e "s/@SIZE@/$SIZE_KB/" -e "s/@ARCH@/$ARCH_DEB/" -e "s/@GLIBC@/$MINGLIBC/" > "$DEB/DEBIAN/control"
+  tr -d '\r' < shell/packaging/deb/control.in | sed -e "s/@VERSION@/$VER-$REL/" -e "s/@SIZE@/$SIZE_KB/" -e "s/@ARCH@/$ARCH_DEB/" -e "s/@GLIBC@/$MINGLIBC/" > "$DEB/DEBIAN/control"
   (cd "$DEB" && find . -type f ! -path './DEBIAN/*' -exec md5sum {} + | sed 's| \./| |' > DEBIAN/md5sums)
   chmod 0755 "$DEB/DEBIAN"; chmod 0644 "$DEB/DEBIAN/control" "$DEB/DEBIAN/md5sums"
   OUT_DEB="dist/remix_${VER}-${REL}_${ARCH_DEB}.deb"
@@ -60,7 +60,7 @@ if command -v rpmbuild >/dev/null; then
   RPMTOP="$ROOT/build/rpmbuild"; rm -rf "$RPMTOP"
   mkdir -p "$RPMTOP"/{BUILD,RPMS,SOURCES,SPECS,SRPMS,BUILDROOT}
   tar -C "$STAGE" -czf "$RPMTOP/SOURCES/remix-stage.tar.gz" usr
-  tr -d '\r' < linux/packaging/rpm/remix.spec > "$RPMTOP/SPECS/remix.spec"
+  tr -d '\r' < shell/packaging/rpm/remix.spec > "$RPMTOP/SPECS/remix.spec"
   rpmbuild -bb "$RPMTOP/SPECS/remix.spec" \
     --define "_topdir $RPMTOP" --define "remix_version $VER" --define "remix_release $REL" \
     --define "dist %{nil}" >"$RPMTOP/rpmbuild.log" 2>&1 || { tail -40 "$RPMTOP/rpmbuild.log"; exit 1; }
@@ -78,17 +78,17 @@ install -m755 "$STAGE/usr/bin/remix" "$PORT/remix"
 cp -a assets/branding assets/fonts assets/themes "$PORT/assets/"
 rm -f "$PORT/assets/branding/app.ico"
 for f in "$PORT"/assets/themes/*.ini; do semcr 644 "assets/themes/$(basename "$f")" "$f"; done
-semcr 755 linux/RODAR.sh "$PORT/RODAR.sh"
+semcr 755 shell/RODAR.sh "$PORT/RODAR.sh"
 semcr 644 Musica/LEIA-ME.txt "$PORT/Musica/LEIA-ME.txt"
-semcr 644 linux/README-LINUX.md "$PORT/README-LINUX.md"
-semcr 644 linux/packaging/copyright "$PORT/LICENCAS.txt"
-semcr 755 linux/instalar-dependencias.sh "$PORT/instalar-dependencias.sh"
-semcr 644 linux/LEIA-ME-PORTATIL.txt "$PORT/LEIA-ME.txt"
+semcr 644 shell/README-LINUX.md "$PORT/README-LINUX.md"
+semcr 644 shell/packaging/copyright "$PORT/LICENCAS.txt"
+semcr 755 shell/instalar-dependencias.sh "$PORT/instalar-dependencias.sh"
+semcr 644 shell/LEIA-ME-PORTATIL.txt "$PORT/LEIA-ME.txt"
 printf '[General]\nMusicFolder=Musica\n' > "$PORT/config.ini"
 OUT_ZIP="dist/remix-$VER-linux-x86_64-portable.zip"
 rm -f "$OUT_ZIP"
 (cd "$ROOT/build/portable" && zip -qr "$ROOT/$OUT_ZIP" "remix-$VER-linux-x86_64")
 echo "[pkg] zip portatil -> $OUT_ZIP"
 # ---------------------------------------------------------------- AppImage --
-bash linux/build-appimage.sh || echo "[pkg] AppImage falhou (opcional)"
+bash shell/build-appimage.sh || echo "[pkg] AppImage falhou (opcional)"
 ls -la dist/
