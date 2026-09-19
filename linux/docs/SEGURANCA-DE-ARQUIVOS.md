@@ -74,8 +74,8 @@ Vocabulário usado aqui:
 | `--play-file`, IPC, arrastar | `PlayFileDirect` (`app_core.h`) | igual a "Tocar" |
 | Arquivos escolhidos para uma playlist | `OnPickedFiles` → `PlaylistAddFile` (`app_online_b.h`, `app_playlists.h`) | igual a "Tocar". **Aceita qualquer arquivo regular** (o diálogo tem o filtro "Todos") |
 | `playlist.json` recebido de alguém | `LoadPlaylistFile` (`app_playlists.h`) | `JParser` (recursivo), `Config::FromPortable` em `path`/`folder` |
-| Download online | `RunDownload` (`online_play.h`) | yt-dlp + ffmpeg (outros processos). O arquivo final depois é lido como "Tocar" e "Capa embutida" |
-| Streaming online | `StreamThread` (`online_play.h`) | yt-dlp + **ffmpeg → PCM s16le** (o player só vê PCM) |
+| Download online | `RunDownload` (`online_play.h`) | CLI + ffmpeg (outros processos). O arquivo final depois é lido como "Tocar" e "Capa embutida" |
+| Streaming online | `StreamThread` (`online_play.h`) | a CLI de mídia + **ffmpeg → PCM s16le** (o player só vê PCM) |
 | Miniatura online (YouTube/Deezer/Apple/Spotify) | `FetchThumb` (`online_resolve.h`) | ffmpeg (outro processo). **Sem ffmpeg**: `ShrinkCoverInto` no processo da UI |
 | Busca de capa na internet | `WebSearchAsync`/`WebDownloadSelectedAsync` (`linux/app_web.h`, `windows/win_web.h`) | `LoadImageFromMemory` (stb_image) / `Gdiplus::Image` (**UI, threads**) |
 | Papel de parede | `g_cfg.bgWallpaper` → `gfx::LoadImg` / `GetWallpaperImage` | stb_image / GDI+ (**UI**) |
@@ -97,9 +97,9 @@ Vocabulário usado aqui:
 | **Cabeçalho com tamanho gigante** | Contagens e tamanhos que viram alocação ou laço (padrão clássico de estouro de inteiro, como no Stagefright) | ID3 declarando ~256 MB, WAV com `data` = 0xFFFFFFFF, átomo MP4 de 64 bits, STREAMINFO do FLAC com taxa ou total absurdos |
 | **Metadados enormes** | APIC de dezenas de MB, milhares de comentários Vorbis, letra gigante; texto com caracteres de controle ou de direção (U+202E) | `ReadId3Tags` aloca o tamanho declarado **antes** de ler; `art::MAXB` = 64 MB por capa; título e artista vão para a UI e para o celular |
 | **Bomba de descompressão** | PNG ou JPEG de poucos KB que declara 20000×20000 px; áudio curto que "declara" horas | `gfx::LoadImg` na thread da UI (um PNG de 16k×16k vira ~1 GB RGBA; sem `STBI_MAX_DIMENSIONS`); `TranscodeToWav` sem `-fs` pode gerar WAV de GB |
-| **Nome de arquivo e traversal** | yt-dlp CVE-2024-38519 (extensão não validada no download, corrigido na 2024.07.01); "zip slip" como classe; nomes com U+202E, `CON`, `NUL`, `-` no começo | `-o audio.%(ext)s` no download; `pasta_temp` no diário (`OnlineStartupCleanup`); `path` relativo com `..` em `playlist.json`; `SafeFileName` |
+| **Nome de arquivo e traversal** | CVE-2024-38519 (CLI de mídia) (extensão não validada no download, corrigido na 2024.07.01); "zip slip" como classe; nomes com U+202E, `CON`, `NUL`, `-` no começo | `-o audio.%(ext)s` no download; `pasta_temp` no diário (`OnlineStartupCleanup`); `path` relativo com `..` em `playlist.json`; `SafeFileName` |
 | **Links simbólicos e arquivos especiais** | link para um arquivo sensível; FIFO ou dispositivo com nome de música ou de capa | `WalkFiles` pula links, mas `FindCoverInFolder`, `PlaylistTracks`, `PlayFileDirect` e `OnPickedFiles` usam `exists`/`is_regular_file`, que **seguem** links; um FIFO chamado `cover.jpg` trava o `fopen` |
-| **Download com formato inesperado** | `-f bestaudio/best` pode trazer vídeo; site genérico entrega HLS/DASH; ffmpeg lendo arquivo local por playlist HLS (CVE-2016-1897/1898, CVE-2017-9993) | `StreamThread` passa `mi.url` do JSON do yt-dlp direto para `-i`; `FetchThumb` passa um arquivo baixado de URL arbitrária para `ffmpeg -i` sem forçar o formato |
+| **Download com formato inesperado** | `-f bestaudio/best` pode trazer vídeo; site genérico entrega HLS/DASH; ffmpeg lendo arquivo local por playlist HLS (CVE-2016-1897/1898, CVE-2017-9993) | `StreamThread` passa `mi.url` do JSON da CLI direto para `-i`; `FetchThumb` passa um arquivo baixado de URL arbitrária para `ffmpeg -i` sem forçar o formato |
 | **Travamento (DoS de tempo)** | Arquivo que prende o decodificador em laço | `TranscodeToWav` espera para sempre (`WaitForSingleObject(INFINITE)` / `system()`); `DecodeMono` sem limite de tempo |
 
 ### 1.4 Quem é o atacante, e o que fica fora do modelo
@@ -107,7 +107,7 @@ Vocabulário usado aqui:
 Dentro do modelo:
 
 - quem distribui **música** (torrent, grupo de WhatsApp, pendrive emprestado, pasta compartilhada);
-- um **site** que o extrator genérico do yt-dlp abre, ou um CDN de capa comprometido
+- um **site** que o extrator genérico da CLI abre, ou um CDN de capa comprometido
   (na busca de capa, a `murl` é a imagem do site original, não do Bing);
 - quem manda um **link** ou um **`playlist.json`**/pasta de playlist;
 - um **celular pareado** de outra pessoa (o Host permite vários aparelhos).
@@ -115,7 +115,7 @@ Dentro do modelo:
 Fora do modelo (outros documentos, se for o caso):
 
 - malware que já roda como o usuário, ou alguém com escrita na pasta do app (pode trocar o `.exe`);
-- cadeia de suprimentos do próprio yt-dlp, ffmpeg, cloudflared ou deno (versão e origem dos binários);
+- cadeia de suprimentos da própria CLI, ffmpeg, cloudflared ou deno (versão e origem dos binários);
 - sequestro de `PATH` no Linux (o app procura as ferramentas no `PATH`; no Windows só em `assets\tools`).
 
 ---
@@ -134,7 +134,7 @@ Fora do modelo (outros documentos, se for o caso):
 | `StreamThread` (`online_play.h`) | Streaming: ffmpeg → `-f s16le -ac 2 -ar 48000 pipe:1` → `PcmStream`. **Nenhum contêiner remoto** passa pelo miniaudio. |
 | `FetchThumb` (`online_resolve.h`) | Com ffmpeg, a miniatura vira JPEG quadrado de até 512 px, com timeout de 30 s. |
 | `app_proc.h` (`Proc`, `RunCapture`) | Sem shell, argumentos em vetor (`QuoteArgW` correto); Windows: Job Object `KILL_ON_JOB_CLOSE` e herança só dos pipes (`PROC_THREAD_ATTRIBUTE_HANDLE_LIST`); Linux: `posix_spawn` num grupo próprio e pipes `O_CLOEXEC`; `RunCapture` com timeout, cancelamento e teto de 96 MB na saída. |
-| Download (`RunDownload`, `SafeFileName`) | yt-dlp com `--ignore-config`; saída numa pasta temporária `job-<pid>-<n>`; só move arquivo com extensão de áudio (`LooseAudioExt`); nome final limpo (barras, `:*?"<>` e a barra vertical, controles, 140 caracteres, pontos no fim). |
+| Download (`RunDownload`, `SafeFileName`) | CLI de mídia com `--ignore-config`; saída numa pasta temporária `job-<pid>-<n>`; só move arquivo com extensão de áudio (`LooseAudioExt`); nome final limpo (barras, `:*?"<>` e a barra vertical, controles, 140 caracteres, pontos no fim). |
 | HTTP (`sys::HttpGet`, `HttpGetBytes`) | Teto de 40 MB e timeouts. |
 | Host (`host_server.h`, `host_web.h`) | Só ids do mapa, `..` rejeitado, `X-Content-Type-Options: nosniff`, CSP sem script inline, a página usa `textContent`. Um título malicioso **não** vira XSS no celular. |
 | Windows (`win_diag.h`) | Log de crash e modo seguro depois de uma abertura que não terminou. |
@@ -163,13 +163,13 @@ Fora do modelo (outros documentos, se for o caso):
 7. **ffmpeg sem limites e sem lista de permitidos.** `TranscodeToWav` não tem timeout (Linux usa `system()`
    com `ffmpeg` do `PATH`; Windows usa `CreateProcessW` + `INFINITE`, fora do `Proc`/Job), nem `-fs`,
    `-protocol_whitelist` ou `-format_whitelist`. `FetchThumb` entrega a `ffmpeg -i` um arquivo baixado,
-   e o ffmpeg decide o formato pelo conteúdo. `StreamThread` usa `mi.url` do JSON do yt-dlp como entrada.
+   e o ffmpeg decide o formato pelo conteúdo. `StreamThread` usa `mi.url` do JSON da CLI como entrada.
 8. **Processos filhos com todos os direitos do usuário:** rede, disco inteiro, criar
    outros processos. O Job só serve para "morrer junto". No Linux não há limite nenhum.
 9. **Download traz "extras".** `-x --embed-metadata --embed-thumbnail` põe dentro do arquivo final a
    miniatura remota e metadados arbitrários. A etapa "tagged" usa `-map 0 -c copy` e copia **todos** os
    fluxos (capa, anexos, dados). Nada confere se o conteúdo bate com a extensão, e o app não exige
-   yt-dlp ≥ 2024.07.01.
+   uma CLI de mídia recente.
 10. **Host serve o original.** `SendFile` manda os bytes do arquivo como estão, e o decodificador do celular
     recebe o arquivo hostil. `host::Publish` inclui entradas de playlist que podem não ser áudio
     (`OnPickedFiles` não filtra; `playlist.json` pode apontar para qualquer caminho). `IdFor` é
@@ -204,7 +204,7 @@ Fora do modelo (outros documentos, se for o caso):
  │ Host ─ SendFile(original) ────────────────────────────────► navegador celular │
  └───────────────────────────────────────────────────────────────────────────────┘
    outros processos, SEM limites:  ffmpeg (TranscodeToWav, FetchThumb, streaming,
-                                   download), yt-dlp, spotdl, deno, cloudflared
+                                   download), a CLI de mídia, deno, cloudflared
 ```
 
 ---
@@ -413,7 +413,7 @@ Técnicos: **taxa, canais, bits, atraso/preenchimento** (gapless).
 | **Capas e miniaturas** (`art::Lookup`, `FindCoverInFolder`, `GetThumb`, `g_thumbCache`, `PlatformLoadCover`) | stb_image/GDI+ no original ou na cópia crua | Só `capas/<sha>-512.jpg`, depois da checagem de SOF0. |
 | **Capa escolhida / busca na web** (`SaveCustomCover`, `WebSearchAsync`, `WebDownloadSelectedAsync`) | Decodifica na UI; grava cópia crua se for pequena | Bytes vão para o trabalhador; miniaturas da busca também (lote); `covers.ini` passa a apontar para a capa limpa. |
 | **Papel de parede** | `gfx::LoadImg` / `GetWallpaperImage` | Mesmo pipeline, com teto de 2560 px em vez de 512. |
-| **Download online** (`RunDownload`) | yt-dlp `-x --embed-metadata --embed-thumbnail`, depois `-map 0 -c copy` | yt-dlp **sem** `--embed-thumbnail`/`--embed-metadata`; o arquivo de `job-*` passa pelo trabalhador (conteúdo × extensão, remux `-map 0:a:0`, capa limpa anexada, só título/artista/álbum). **O que vai para a pasta do usuário é a versão limpa** (pergunta 6). Exigir yt-dlp ≥ 2024.07.01. |
+| **Download online** (`RunDownload`) | CLI de mídia `-x --embed-metadata --embed-thumbnail`, depois `-map 0 -c copy` | CLI de mídia **sem** `--embed-thumbnail`/`--embed-metadata`; o arquivo de `job-*` passa pelo trabalhador (conteúdo × extensão, remux `-map 0:a:0`, capa limpa anexada, só título/artista/álbum). **O que vai para a pasta do usuário é a versão limpa** (pergunta 6). Exigir uma CLI de mídia recente. |
 | **Streaming online** (`StreamThread`) | ffmpeg → PCM (já bom), mas sem restrição | Mesmo formato de saída; ffmpeg com `-protocol_whitelist https,tls,tcp,crypto,hls,http` (em modo URL) e os limites da seção 4; `mi.url` só é aceita se começar com `https://`. |
 | **Miniatura online** (`FetchThumb`) | ffmpeg sem formato forçado; sem ffmpeg, decodifica na UI ou grava cru | Formato forçado pelo magic (`-f jpeg_pipe`/`png_pipe`/`webp_pipe`); sem ffmpeg vai para o trabalhador próprio (stb_image). WebP sem ffmpeg continua sem capa, como hoje. |
 | **Host** (`/api/faixa/<id>`, `/api/capa/<id>`) | `SendFile(original)` | Serve o **remux** do cache (menor que PCM pelo túnel) com `Content-Type` do formato limpo. Se ainda não existe: `503` + `Retry-After: 3` e a higienização começa na hora. Ao ligar o Host, pré-higieniza as playlists hosteadas. `host::Publish` descarta entradas que não sejam áudio pelo conteúdo. Capa: só o JPEG limpo. |
@@ -473,7 +473,7 @@ isolamento reduz o que um exploit bem-sucedido consegue fazer lá dentro.
 | PCM para cache (FLAC/WAV) | 1 GB | 0,5 × duração | duração + 30 s | 2 GB | não | não |
 | PCM por pipe (tocar) | 1 GB | vigia: sem PCM por 10 s com demanda → mata | — | pipe | não | não |
 | ffmpeg do streaming | 1 GB | vigia igual | — | pipe | **sim** (só https) | não |
-| yt-dlp (download/busca) | 2 GB | — | como hoje | pasta `job-*` | **sim** | **sim** (ffmpeg, deno) |
+| CLI de mídia (download/busca) | 2 GB | — | como hoje | pasta `job-*` | **sim** | **sim** (ffmpeg, deno) |
 
 No ffmpeg, somar `-max_alloc 268435456` (nenhuma alocação isolada acima de 256 MB).
 
@@ -481,7 +481,7 @@ No ffmpeg, somar `-max_alloc 268435456` (nenhuma alocação isolada acima de 256
 
 | Opção | O que impede | Custo de implementar | Custo em execução | Risco de quebrar |
 |---|---|---|---|---|
-| **Job Object com limites** (em `Proc::Start`: `JOB_OBJECT_LIMIT_PROCESS_MEMORY`, `JOB_OBJECT_LIMIT_PROCESS_TIME`, `JOB_OBJECT_LIMIT_ACTIVE_PROCESS`=1, `JOB_OBJECT_LIMIT_DIE_ON_UNHANDLED_EXCEPTION`; `JobObjectBasicUIRestrictions` com `UILIMIT_HANDLES`, `READCLIPBOARD`, `WRITECLIPBOARD`, `GLOBALATOMS`, `DESKTOP`, `EXITWINDOWS`) | Esgotar memória e CPU, criar filhos, mexer na área de transferência e em janelas de outros processos | **Pequeno**: o Job já existe em `app_proc.h`; é preencher a struct por perfil | ~0 | Baixo. `ACTIVE_PROCESS=1` **não** vale para o yt-dlp (ele chama ffmpeg e deno). |
+| **Job Object com limites** (em `Proc::Start`: `JOB_OBJECT_LIMIT_PROCESS_MEMORY`, `JOB_OBJECT_LIMIT_PROCESS_TIME`, `JOB_OBJECT_LIMIT_ACTIVE_PROCESS`=1, `JOB_OBJECT_LIMIT_DIE_ON_UNHANDLED_EXCEPTION`; `JobObjectBasicUIRestrictions` com `UILIMIT_HANDLES`, `READCLIPBOARD`, `WRITECLIPBOARD`, `GLOBALATOMS`, `DESKTOP`, `EXITWINDOWS`) | Esgotar memória e CPU, criar filhos, mexer na área de transferência e em janelas de outros processos | **Pequeno**: o Job já existe em `app_proc.h`; é preencher a struct por perfil | ~0 | Baixo. `ACTIVE_PROCESS=1` **não** vale para a CLI (ele chama ffmpeg e deno). |
 | **Criação mitigada** (`PROC_THREAD_ATTRIBUTE_CHILD_PROCESS_POLICY` = `PROCESS_CREATION_CHILD_PROCESS_RESTRICTED`, Win10 1709+; `MITIGATION_POLICY` com DEP/ASLR forçados; `WIN32K_SYSTEM_CALL_DISABLE` **só no trabalhador próprio**) | Filhos mesmo fora do Job; boa parte das syscalls de kernel gráfico (superfície histórica de elevação) | Pequeno (a lista de atributos já é montada em `Proc::Start`) | ~0 | Médio: desligar win32k no ffmpeg quebra (ele carrega `user32`). Só no nosso trabalhador, que não usa GDI+. |
 | **Token restrito + integridade Baixa** (`CreateRestrictedToken` com `DISABLE_MAX_PRIVILEGE` + SIDs negados; `SetTokenInformation(TokenIntegrityLevel, S-1-16-4096)`; `CreateProcessAsUserW`, que dispensa privilégio porque o token deriva do próprio processo) | Escrever nos arquivos do usuário, no registro HKCU e em processos de integridade Média. Leitura continua possível (é o padrão do Windows) | **Médio**: a pasta `limpo\tmp` precisa de rótulo de integridade Baixa (`SetNamedSecurityInfo` + ACE `SYSTEM_MANDATORY_LABEL`), ou a saída vai só pelo pipe | ~10 ms por processo | Médio: antivírus às vezes estranha processo de integridade Baixa; o ffmpeg estático funciona; testar caminho com acento e japonês. |
 | **AppContainer** (`CreateAppContainerProfile` + `PROC_THREAD_ATTRIBUTE_SECURITY_CAPABILITIES` sem capacidades) | Rede, leitura de arquivos sem ACL para o contêiner, a maior parte do sistema | **Grande**: dar RX a `ALL APPLICATION PACKAGES` em `assets\tools`, passar o original por handle herdado ou pipe (o ffmpeg precisa de seek em MP4: handle, não pipe), perfil no registro | 20–50 ms na primeira vez | Alto: não existe no Windows 7 (o manifesto ainda lista o 7), pendrive exFAT e pasta de rede precisam de teste, instalação portátil em pasta sem permissão de ACL. |
@@ -520,7 +520,7 @@ si mesmo e faz `execve`. rlimits, `no_new_privs`, filtros seccomp e regras landl
 
 - **O celular.** O Host precisa servir a cópia limpa (seção 3.9); o isolamento do PC não protege o navegador do telefone.
 - **O codec no nível 1.** O remux não impede um bug do dr_mp3 com dados de quadro malformados. Só o nível 2 impede.
-- **ffmpeg e yt-dlp desatualizados.** O isolamento limita o estrago, não corrige a falha.
+- **ffmpeg e a CLI de mídia desatualizados.** O isolamento limita o estrago, não corrige a falha.
   Mostrar a versão em Configurações > ONLINE (já mostra) e avisar abaixo de um mínimo.
 
 ---
@@ -663,7 +663,7 @@ mexe em vários pontos das duas cascas e precisa de teste em VM. Numeração de 
 | **1 — trabalhador + capas limpas** | 1.5.0 | `remix --higienizar` (capas e metadados), protocolo, `limpo/v1/capas`, quarentena de capa, todas as fontes de imagem pelo trabalhador, fim da cópia crua, migração de `assets/covers`. Chave `Higienizar=capas`. Só processo separado + limites (sem isolamento de SO) | **8** | Capas pequenas levemente reencodadas; capa que falhar some com aviso |
 | **2 — isolamento de SO** | 1.6.0 | Windows: integridade Baixa + filhos restritos + win32k desligado no trabalhador; Linux: trampolim `--isolar` com rlimits, `no_new_privs`, landlock, seccomp por proibição, `unshare` de rede quando der; ffmpeg das capas e do `TranscodeToWav` sob o mesmo perfil. Testes em VM | **8** | Não (se der certo) |
 | **3 — áudio limpo para tocar** | 1.7.0 | Etapa 1 completa; nível 2 por pipe com `PcmStream` generalizado (f32, N canais, taxa nativa); nível 1 como alternativa; `ResolverTocavel`; onda pelo PCM; travas `estrito`; UI de quarentena. Chaves `avisar` e `estrito` (padrão continua `0`) | **13** | Ícone de bloqueio, "tocar mesmo assim", tamanho do cache |
-| **4 — downloads e Host** | 1.8.0 | Download grava a versão limpa (sem `--embed-*`, conteúdo × extensão, versão mínima do yt-dlp); streaming com `protocol_whitelist` e limites; Host serve remux do cache (`503`/`Retry-After`), pré-higieniza as playlists hosteadas, descarta não áudio no `Publish`; LRU e botão "Limpar" | **8** | Downloads sem capítulos e tags extras; Host demora um pouco na primeira vez |
+| **4 — downloads e Host** | 1.8.0 | Download grava a versão limpa (sem `--embed-*`, conteúdo × extensão, versão mínima da CLI); streaming com `protocol_whitelist` e limites; Host serve remux do cache (`503`/`Retry-After`), pré-higieniza as playlists hosteadas, descarta não áudio no `Publish`; LRU e botão "Limpar" | **8** | Downloads sem capítulos e tags extras; Host demora um pouco na primeira vez |
 | **5 — opcionais e decisão do padrão** | 2.0 | AppContainer (Win10+) e bubblewrap como camada extra; fuzzing contínuo; decidir se `avisar` vira padrão depois de uma versão beta | **5** | Talvez o padrão mude |
 
 Ordem de valor por esforço: **0 → 1 → 2 → 4 (Host) → 3 → 5**. O Host e as capas expõem mais gente
@@ -682,7 +682,7 @@ preferir, a parte do Host da fase 4 pode vir logo depois da fase 2.
    limpa sozinho) ou `%LOCALAPPDATA%\Remix\cache`? 2 GB serve?
 4. **Sem ffmpeg**: higienizar só os quatro nativos com o trabalhador próprio, ou exigir ffmpeg quando a chave estiver ligada?
 5. **Quando falha**: bloquear ou tocar o original com aviso? E o usuário pode liberar uma faixa para sempre?
-6. **Downloads**: aceitar que o arquivo gravado na pasta do usuário **perca** o que o yt-dlp embute hoje
+6. **Downloads**: aceitar que o arquivo gravado na pasta do usuário **perca** o que a CLI embute hoje
    (descrição, URL, capítulos, miniatura original)? Fica só título, artista, álbum e a capa limpa.
 7. **Quais tags ficam** além de título, artista, álbum, artista do álbum, faixa e ano? Letra? ReplayGain
    (o app não usa hoje)? Capítulos de audiolivro (`.m4b`)?
@@ -698,7 +698,7 @@ preferir, a parte do Host da fase 4 pode vir logo depois da fase 2.
     ou só quando a faixa aparece na tela ou toca?
 13. **Sem telemetria**: como saber de falsos positivos? Sugestão: botão "Copiar relatório" na quarentena, com motivo,
     formato e versão do ffmpeg, **sem caminho** do arquivo.
-14. **Versões mínimas**: bloquear download e streaming com yt-dlp < 2024.07.01, ou só avisar? E ffmpeg velho?
+14. **Versões mínimas**: bloquear download e streaming com uma CLI antiga, ou só avisar? E ffmpeg velho?
 15. **Quarentena** guarda só o registro (sugerido) ou também uma cópia do arquivo, para o usuário mandar para análise?
 16. **Limite de duração**: 12 h está bom (audiolivros), ou deve ser configurável por pasta?
 
@@ -727,4 +727,4 @@ Cada item é pequeno, local e não muda o comportamento para arquivos normais. �
 | A15 | `linux/app_web.h` `WebDownloadSelectedAsync` | Arquivo em `<cache>` com nome aleatório, aberto com `O_CREAT\|O_EXCL\|O_NOFOLLOW` (em vez de `$TMPDIR/remix_cover_full.<ext>`). |
 | A16 | `art::Work`, `EnsureInternalCover` | Quando `ShrinkCoverInto` recusa por ser pequena, reencodar mesmo assim; se a decodificação falhar, **não** gravar a cópia crua. |
 | A17 | Modo seguro (`win_diag.h`, `windows/main.cpp`, `app_core.h`) | Em modo seguro: não chamar `PlayIndex(g_current,false)` na abertura (hoje ele abre e analisa a última faixa), não extrair capa embutida, não carregar miniaturas nem papel de parede, não rodar `AnalyzeCurrentWave`. Tira o laço de crash por arquivo ou imagem. |
-| A18 | `RunDownload` (`online_play.h`) | Etapa "tagged" com `-map 0:a:0` em vez de `-map 0`; conferir o magic do `produced` contra a extensão; avisar se o yt-dlp for anterior a 2024.07.01. |
+| A18 | `RunDownload` (`online_play.h`) | Etapa "tagged" com `-map 0:a:0` em vez de `-map 0`; conferir o magic do `produced` contra a extensão; avisar se a CLI for antiga. |

@@ -1,0 +1,23 @@
+REMIX PLAYER - VERSAO PORTATIL PARA LINUX
+=========================================
+
+1. Extraia a pasta:   unzip remix-*-linux-x86_64-portable.zip
+
+2. Abra:   ./RODAR.sh   (ou ./remix)
+
+3. (Opcional) Fontes externas - buscar e reproduzir de fontes publicas:
+   O Remix nao instala, nao baixa e nao distribui nenhum programa. Se voce quiser
+   essa parte, instale pela sua distro:
+      - um programa de linha de comando de midia compativel (precisa aceitar
+        --dump-json, -f e --flat-playlist, e imprimir JSON na saida padrao);
+      - ffmpeg;
+      - Deno 2.3+ ou Node.js 22+ (algumas fontes exigem um "JavaScript runtime").
+   Depois, no Remix: Configuracoes > PROGRAMA DE LINHA DE COMANDO > ESCOLHER O
+   PROGRAMA... (ou digite o caminho). O app testa o arquivo na hora e mostra a
+   versao; o ffmpeg e o runtime ele procura sozinho no PATH.
+   Sem isso configurado, o player local, as playlists e os arquivos funcionam
+   normalmente - so as telas online avisam que falta configurar.
+   Mantenha esse programa atualizado pela sua distro: as fontes publicas mudam.
+
+Config, capas e playlists ficam nesta pasta. Precisa de glibc 2.27+ (distros de 2018 pra ca).
+Codigo, novidades e ajuda: https://github.com/NinjaZinS2/Remix-Linux

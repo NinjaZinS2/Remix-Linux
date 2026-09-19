@@ -18,7 +18,7 @@ Mudanças da **1.5.0** em relação à 1.4.0 no fim deste documento.
    - **Túnel Cloudflare**: acesso pela internet (precisa do `cloudflared`; os instaladores de
      dependências baixam em `assets/tools`).
    - **Rede local**: acesso direto pelo mesmo roteador (Wi-Fi ou cabo).
-   - **Online no celular**: deixa o celular buscar e ouvir online usando o yt-dlp/ffmpeg do PC.
+   - **Online no celular**: deixa o celular buscar e ouvir online usando a CLI/ffmpeg do PC.
    - **QR pede aceite**: por padrão o QR vincula direto; ligado, pede ACEITAR no PC também.
    - **IPv6**: desligado por padrão. Ligado, aceita IPv6 **só da rede local** (link-local,
      ULA ou o mesmo /64 do PC).
@@ -76,7 +76,7 @@ bloqueados geram uma explicação em vez de voltar ao PIN. A URL do `app.js`/`ap
 e um resumo do código (`?v=1.5.0-xxxxxxxx`), então o celular nunca fica com o arquivo velho do cache.
 
 - Arquivos locais tocam direto do PC (com avanço/retrocesso por `Range`).
-- Online: o PC resolve com o yt-dlp e converte ao vivo com o ffmpeg para MP3 192 kbps (ou
+- Online: o PC resolve com a CLI e converte ao vivo com o ffmpeg para MP3 192 kbps (ou
   AAC se o ffmpeg não tiver MP3). Avançar reabre o áudio do ponto escolhido. Playlists do PC
   que têm músicas online também tocam assim no celular. As capas online passam pelo PC:
   **o celular nunca fala com YouTube/SoundCloud**.
@@ -86,7 +86,7 @@ e um resumo do código (`?v=1.5.0-xxxxxxxx`), então o celular nunca fica com o 
   música vem como stream (avançar recomeça com `?t=`), e o tempo mostrado considera a velocidade.
 - **Onda no ritmo no celular:** o PC calcula energia e batidas a cada 25 ms (`/api/ritmo`) e a página desenha a onda
   do Tocando agora e faz os ícones de "tocando" pularem na batida — sem Web Audio (que pararia com a tela bloqueada).
-- Começo rápido: a extração do yt-dlp (~3 s) fica em cache por 25 min, compartilhada com o
+- Começo rápido: a extração da CLI (~3 s) fica em cache por 25 min, compartilhada com o
   player e os downloads do PC, e os 3 primeiros resultados de cada busca já são extraídos em
   segundo plano. Medido: o primeiro áudio chega em ~0,3–0,5 s (antes ~3 s).
 
@@ -101,7 +101,7 @@ e um resumo do código (`?v=1.5.0-xxxxxxxx`), então o celular nunca fica com o 
 | Site de fora usando o navegador do celular/PC ("DNS rebinding") | O servidor só aceita `Host` com IP, `localhost`, nome da máquina na rede (`.local`, `.lan`, sem domínio) e o link do túnel; qualquer outro nome recebe 421. `/api/ping` para outra origem responde só `{"app":"remix"}` (sem nome do PC nem versão). |
 | CSRF | Todo POST exige `X-Remix: 1` + cookie SameSite=Strict. |
 | XSS | CSP `script-src 'self'` sem inline, nada de `innerHTML` com dados, JSON escapa `< > &`, `X-Frame-Options: DENY`, `nosniff`. |
-| Injeção (SQL/comando) | Não há SQL. Processos (yt-dlp/ffmpeg) sem shell, argumentos em vetor; todo link vai depois de `--` (nunca vira opção do yt-dlp) e só link `http(s)` toca; a busca vai depois de `ytsearch:`/URL codificada; o celular nunca manda URL — só ids que o PC gerou. ffmpeg com `-protocol_whitelist` (nada de arquivo local). Miniaturas: só https, sem usuário/senha/porta/IP no link, só CDNs conhecidos, **sem seguir redirecionamento**, e só imagem de verdade (JPEG/PNG/WebP/GIF pelos bytes) chega ao ffmpeg, com o formato fixo. |
+| Injeção (SQL/comando) | Não há SQL. Processos (a CLI de mídia/ffmpeg) sem shell, argumentos em vetor; todo link vai depois de `--` (nunca vira opção da CLI) e só link `http(s)` toca; a busca vai depois de `ytsearch:`/URL codificada; o celular nunca manda URL — só ids que o PC gerou. ffmpeg com `-protocol_whitelist` (nada de arquivo local). Miniaturas: só https, sem usuário/senha/porta/IP no link, só CDNs conhecidos, **sem seguir redirecionamento**, e só imagem de verdade (JPEG/PNG/WebP/GIF pelos bytes) chega ao ffmpeg, com o formato fixo. |
 | Cabeçalho malicioso | Nome de cabeçalho fora do padrão (ex.: `Transfer-Encoding :`), `Content-Length`/`Host` repetidos e linhas sem `:` são recusados (400); `Transfer-Encoding` é recusado. O IP do túnel (`CF-Connecting-IP`) só é aceito com o túnel ligado, em conexão local e se for um IP válido. |
 | Path traversal | Só ids opacos (hash); `..`, `%`, `\` e caracteres de controle na URL são recusados. |
 | DoS | 90 pedidos/10 s por origem e 600 só para aparelho com token **válido** (IPv6 contado por /64); 64 conexões, no máximo 12 por origem da rede local; o pedido inteiro tem 15 s para chegar (quem manda um byte por vez é derrubado); cabeçalho 16 KB, corpo 64 KB; 1 busca online por aparelho (3 no total, cancelada se o celular desistir); 1 stream por aparelho (4 no total; trocar de faixa não conta a antiga). As respostas são montadas com a trava e enviadas sem ela (celular lento não congela o PC). |
@@ -142,7 +142,7 @@ Faixa: `{id, t, a, d, c (tem capa), o (1 = online)}`.
 | `POST /api/minhas {acao, slug, nome, id, valor}` | cookie | `criar`, `renomear`, `apagar`, `add`, `remover`, `compartilhar` |
 | `GET /api/faixa/<id>` | cookie | arquivo local com `Range`; com `?fx=slow:2,reverb:1&stem=vocal&t=<s>` vem convertido (stream) |
 | `GET /api/capa/<id>` | cookie | capa local ou miniatura online (via PC) |
-| `GET /api/online/buscar?q=&fonte=0\|1\|2` | cookie | busca pelo yt-dlp do PC |
+| `GET /api/online/buscar?q=&fonte=0\|1\|2` | cookie | busca pela CLI do PC |
 | `GET /api/online/ouvir/<id>?t=<s>` | cookie | stream MP3/AAC convertido ao vivo (aceita `fx` e `stem`) |
 | `GET/POST /api/stems/<id>` | cookie | estado da separação (`pronto`, `fila`, `baixando`, `separando`, `falhou`); POST começa (no máximo 4 na fila) |
 | `GET /api/ritmo/<id>?stem=` | cookie | `{hop:25, e:[energia 0..255], b:[batida 0..255]}` (2 análises por vez) |
@@ -210,7 +210,7 @@ o estado do host.
 - Pedido curto com fim definido (`bytes=a-b`, o navegador só espiando o cabeçalho ou o fim) **não derruba
   mais** o áudio que está tocando naquele aparelho.
 - **Fila adiantada:** a página avisa o PC quais são as **próximas 2 músicas online** (`POST /api/preparar`)
-  e ele já extrai o link (cache de 25 min): trocar de faixa deixa de esperar os ~3 s do yt-dlp.
+  e ele já extrai o link (cache de 25 min): trocar de faixa deixa de esperar os ~3 s da CLI.
 - **Efeitos sem sustos:** vários toques seguidos viram uma recarga só (350 ms), e se o áudio falhar logo
   depois de uma troca de efeito/stem ou de um avanço, a página **tenta a mesma música de novo** em vez de
   pular para a seguinte.
@@ -222,7 +222,7 @@ o estado do host.
   YouTube Music, Deezer, Apple Music, SoundCloud, Bandcamp) na busca online — o botão vira **ABRIR LINK**,
   o PC resolve com os mesmos mecanismos do app (`POST /api/online/link`) e o celular mostra as músicas com
   **TOCAR TUDO** e **SALVAR COMO PLAYLIST** (playlist do próprio aparelho, criada com todas de uma vez pela
-  ação `addvarios` de `/api/minhas`). Link de fora dessas fontes é recusado (o yt-dlp do PC não vira leitor
+  ação `addvarios` de `/api/minhas`). Link de fora dessas fontes é recusado (a CLI do PC não vira leitor
   de URL qualquer).
 - **O vínculo agora mora no PC, não no navegador.** Cada aparelho ganha uma **chave permanente** (32
   caracteres aleatórios, guardada em `host.ini` ao lado do token). O cookie continua sendo o atalho do
@@ -263,5 +263,5 @@ o estado do host.
   vinculado para sempre; revogar/desligar corta downloads e streams na hora; playlist
   compartilhada não vira porta dos fundos; renomear/editar faixa republica para o celular;
   "Hostear no celular" com o Host desligado não apaga mais os aparelhos do `host.ini`; links do
-  yt-dlp com `--`; capas sem SSRF; defesa contra DNS rebinding, slowloris e cabeçalhos
+  a CLI de mídia com `--`; capas sem SSRF; defesa contra DNS rebinding, slowloris e cabeçalhos
   ambíguos; trava geral de PIN; pedidos de vínculo em fila.

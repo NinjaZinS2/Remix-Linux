@@ -7,7 +7,7 @@
 /linux/third_party/
 
 # Binario compilado
-/linux/shell/remix
+/linux/src/shell/remix
 *.AppImage
 
 # Dados do app no modo portatil (criados na primeira execucao)

@@ -1,40 +1,61 @@
-# Remix Player — Linux
+# Remix — Player de música multiplataforma
 
-Player de música em C++ para **Linux** (raylib + miniaudio, ~5 MB): sua biblioteca local,
-playlists, música online (YouTube, YouTube Music, SoundCloud, Spotify, Deezer, Apple Music),
-letras sincronizadas, novidades e recomendações, **Host** para ouvir do celular, Soundpad e bot
-de música do Discord.
+Busca e reproduz música do YouTube Music, YouTube e SoundCloud. Suporta arquivos locais.
+Streaming e download de conteúdo adicional via CLI externa configurável pelo usuário.
 
-> Este repositório é **só do Remix para Linux**. Ele nasceu do
-> [DevelopersOpenSource/Remix](https://github.com/DevelopersOpenSource/Remix) (Windows + Linux no
-> mesmo lugar) e foi separado para cada sistema seguir no próprio ritmo. Todo o app fica em
-> [`linux/`](linux/); a raiz continua livre para outra pasta (por exemplo `windows/`) no futuro.
+Escrito em C++ (raylib + miniaudio). Biblioteca local, playlists, letras sincronizadas,
+página de artista e novidades, e um modo **Host** para ouvir a biblioteca do PC pelo celular.
 
-Programa pronto para baixar: [Releases](https://github.com/NinjaZinS2/Remix-Linux/releases).
+Pronto para baixar: [Releases](https://github.com/NinjaZinS2/Remix-Linux/releases).
 
 ## Como é organizado
 
 | Pasta | O que tem |
 |---|---|
-| `linux/comum/` | o núcleo: biblioteca, playlists, player, online, letras, Descobrir, Host, Soundpad, Discord |
-| `linux/shell/` | a casca Linux (raylib, X11/Wayland, MPRIS) e os scripts de build e empacotamento |
-| `linux/assets/` | fontes, ícones, temas e sons do app |
-| `linux/docs/` | documentação e as telas |
-| `linux/build/`, `linux/dist/`, `linux/third_party/` | gerados pelos scripts (fora do git) |
+| `linux/src/core/` | o núcleo: biblioteca, playlists, player, fontes externas, letras, novidades, Host |
+| `linux/src/shell/` | a casca Linux (raylib, X11/Wayland, MPRIS) e os scripts de build e empacotamento |
+| `linux/config/` | `config.exemplo.ini`: todas as chaves de configuração, comentadas |
+| `linux/assets/` | fontes, ícones, temas e sons |
+| `linux/docs/` | documentação e telas |
+| `linux/dist/` | build pronto (gerado pelos scripts, fora do git) |
+
+Tudo do app vive em `linux/`; a raiz fica livre para outra pasta (por exemplo `windows/`) no futuro.
 
 ## Compilar e rodar
 
 ```bash
-bash linux/shell/fetch-deps.sh     # baixa raylib e o compilador (uma vez)
-bash linux/shell/build.sh          # gera linux/build/remix
+bash linux/src/shell/fetch-deps.sh   # raylib e o compilador (uma vez)
+bash linux/src/shell/build.sh        # -> linux/build/remix
 linux/build/remix
 ```
 
-Para gerar os pacotes (`.rpm`, `.deb`, AppImage e o zip portátil):
+Pacotes (`.rpm`, `.deb`, AppImage e zip portátil) em `linux/dist/`:
 
 ```bash
-bash linux/shell/packaging/build-packages.sh
+bash linux/src/shell/packaging/build-packages.sh
 ```
+
+O `fetch-deps.sh` busca só a **cadeia de compilação** (código do raylib 5.5 e o compilador zig) para
+`linux/third_party/`, sem root e sem tocar no sistema. Ele não instala nem baixa nenhum programa de
+mídia: isso fica por sua conta (veja abaixo).
+
+## Fontes externas (opcional)
+
+O player local, as playlists e os arquivos funcionam sem nada instalado.
+
+Para **buscar e reproduzir de fontes externas**, o Remix executa um programa de linha de comando
+que **você** instala e configura — nada é distribuído, baixado ou embutido pelo app:
+
+1. Instale, pela sua distro, um programa de linha de comando compatível (ele deve aceitar
+   `--dump-json`, `-f`, `--flat-playlist` e imprimir JSON na saída padrão) e o `ffmpeg`.
+2. No Remix: **Configurações > PROGRAMA DE LINHA DE COMANDO > ESCOLHER O PROGRAMA...** (ou digite
+   o caminho). O app testa o arquivo na hora e mostra a versão.
+3. Sem isso configurado, as telas online avisam
+   *"Configure uma CLI compatível para habilitar streaming de fontes externas"* e o resto do
+   programa segue normal.
+
+Reproduzir é a ação principal: o áudio é decodificado **em memória** (chunked), sem passar pelo
+disco. Salvar uma cópia é uma ação secundária, sempre escolhida por você.
 
 <p align="center">
   <img src="linux/docs/screenshots/inicio.png" alt="Tela inicial com as novidades (Linux)" width="49%">
@@ -52,8 +73,8 @@ bash linux/shell/packaging/build-packages.sh
 ## Créditos
 
 <p align="center">
-  <a href="https://github.com/Nero-2077"><img src="https://raw.githubusercontent.com/DevelopersOpenSource/Remix/main/docs/creditos/nero-2077.pt-BR.svg" alt="Nero-2077: autor do Remix, ideia original e versão Windows" width="48%"></a>
-  <a href="https://github.com/NinjaZinS2"><img src="https://raw.githubusercontent.com/DevelopersOpenSource/Remix/main/docs/creditos/sodre.pt-BR.svg" alt="Sodre (NinjaZinS2): co-desenvolvedor, playlists, streaming, versão Linux e Host para iOS" width="48%"></a>
+  <a href="https://github.com/Nero-2077"><img src="https://raw.githubusercontent.com/NinjaZinS2/Remix-Linux/main/linux/docs/creditos/nero-2077.pt-BR.svg" alt="Nero-2077: autor do Remix, ideia original e versão Windows" width="48%"></a>
+  <a href="https://github.com/NinjaZinS2"><img src="https://raw.githubusercontent.com/NinjaZinS2/Remix-Linux/main/linux/docs/creditos/sodre.pt-BR.svg" alt="Sodre (NinjaZinS2): co-desenvolvedor, playlists, streaming, versão Linux e Host para iOS" width="48%"></a>
 </p>
 
 **[Nero-2077](https://github.com/Nero-2077)** criou o Remix: a ideia original e a versão Windows.
@@ -75,9 +96,9 @@ do **Host** — o PC vira servidor para o celular — para o Remix chegar ao **i
   e fileiras como "O melhor de \<artista\>", "Parecido com \<artista\>" e "Dos artistas que voce
   ouve", junto com "Bombando agora", "Playlists da semana", "Albuns em alta" e "Artistas do
   momento". Em **Descobrir** da para navegar por genero e ver as paradas de cada estilo. Tudo vem
-  da API publica do Deezer (sem login e sem chave) e so traz metadados: quem toca e baixa continua
-  sendo o motor online do Remix (yt-dlp), entao vem a musica inteira. O que voce ouve fica em
-  `gostos.ini`, so no seu PC.
+  da API publica do Deezer (sem login e sem chave) e so traz metadados: quem toca continua sendo o
+  player do Remix, pela fonte externa que voce configurou. O que voce ouve fica em `gostos.ini`,
+  so no seu PC.
 - **Painel Tocando agora** (direita): capa grande, sobre o artista (foto, fas e parecidos) e o que
   vem depois na fila. Como as recomendacoes sao montadas: [linux/docs/DESCOBRIR.md](linux/docs/DESCOBRIR.md).
 - **Letra sincronizada**: a linha atual fica em destaque acompanhando a musica e tocar numa linha
@@ -185,63 +206,66 @@ padrao. O botao **PADRAO (PASTAS DO USUARIO)** restaura a busca automatica. O bo
 do cabecalho faz a mesma troca sem abrir as configuracoes (pastas recentes, escolher outra
 ou voltar ao padrao), e a pasta escolhida e monitorada: arquivos novos/removidos aparecem sozinhos.
 
-## Musica online (streaming e download)
+## Fontes externas: buscar e reproduzir
 
 Aba **ONLINE** (acima da lista) ou, numa playlist, **+ ADICIONAR > Buscar online / Colar link**.
-Ctrl+V com um link em qualquer lugar do app tambem abre a busca.
+Ctrl+V com um link em qualquer lugar do app tambem abre a busca. Tudo aqui depende da CLI que voce
+configurou em **Configuracoes > PROGRAMA DE LINHA DE COMANDO**; sem ela, o Remix avisa e o resto do
+app segue normal.
 
-- **Busca** por nome no YouTube Music, YouTube ou SoundCloud (animacao de carregando enquanto o
-  yt-dlp procura; os resultados aparecem conforme chegam). Cada resultado tem ▶ (tocar), ↓ (baixar)
-  e + (colocar numa playlist); "ADICIONAR TODAS" salva a lista inteira.
+- **Busca** por nome no YouTube Music, YouTube ou SoundCloud (animacao de carregando enquanto a
+  busca roda; os resultados aparecem conforme chegam). Cada resultado tem ▶ (tocar, a acao
+  principal), + (colocar numa playlist) e ↓ (salvar uma copia); "ADICIONAR TODAS" guarda a lista
+  inteira.
 - **Links** de musica, album ou playlist: YouTube / YouTube Music e SoundCloud tocam direto;
-  **Spotify** (pagina publica "embed": sem conta, sem chave, ~1 s; o spotdl fica so de reserva,
-  porque a API oficial do Spotify ficou restrita e lenta), **Deezer** (API publica) e **Apple Music**
-  (iTunes lookup) viram titulo + artista + duracao, e cada musica e procurada no YouTube Music na hora
-  de tocar (o link tocavel achado fica salvo na playlist). Nao ha quebra de DRM: o audio vem sempre
-  do YouTube/SoundCloud.
-- **Streaming so na memoria**: o yt-dlp acha o endereco do audio e o ffmpeg decodifica para PCM
+  **Spotify** (pagina publica "embed": sem conta, sem chave, ~1 s), **Deezer** (API publica) e
+  **Apple Music** (iTunes lookup) viram titulo + artista + duracao, e cada musica e procurada no
+  YouTube Music na hora de tocar (o link tocavel achado fica salvo na playlist). O Remix nao
+  contorna nem remove protecao de conteudo: o audio vem sempre da fonte publica que a CLI resolve.
+- **Reproducao so na memoria**: a CLI devolve o endereco do audio e o ffmpeg decodifica para PCM
   direto na RAM (no maximo 6 min decodificados a frente e ~10 min no total; o que ja tocou e
   descartado). Fechar o app no meio nao deixa arquivo nenhum. Avancar/voltar (seek) funciona.
-- **Fila de streaming**: a musica atual e as **proximas 2** (na ordem da lista ou do aleatorio) ficam
-  cada uma no seu canal (yt-dlp + ffmpeg + buffer na memoria). As da fila comecam em cascata (cada
-  uma quando a anterior ja achou o audio), guardam ~75 s e esperam a vez com o ffmpeg parado; ao
-  pular ou quando a musica acaba, a proxima sai **na hora** e o canal continua de onde parou. Na lista
-  aparece TOCANDO / FILA: PRONTA / FILA: CARREGANDO com a barra do quanto ja carregou. Memoria: ~12 MB
-  por musica da fila. Uma musica que falhou na fila e pulada sem esperar de novo.
-- **Começo rápido**: a extração do yt-dlp (~3 s, o que mais atrasava) fica guardada por 25 min e é
-  usada pelo player, pelo celular (Host) e pelo download; os 3 primeiros resultados de uma busca já são
-  extraídos em segundo plano. Tocar um deles começa em ~0,5 s em vez de ~3 s.
-- **Download**: fila em segundo plano com **várias músicas ao mesmo tempo** (metade dos núcleos do
-  processador, de 2 a 6), reaproveitando a extração que o streaming ou a busca já fizeram
-  (`--load-info-json`). Pilula no canto inferior direito (clique = abrir a pasta ou cancelar). O arquivo e montado numa pasta temporaria do cache e so vai para a pasta final
+- **Fila**: a musica atual e as **proximas 2** (na ordem da lista ou do aleatorio) ficam cada uma no
+  seu canal (CLI + ffmpeg + buffer na memoria). As da fila comecam em cascata (cada uma quando a
+  anterior ja achou o audio), guardam ~75 s e esperam a vez com o ffmpeg parado; ao pular ou quando a
+  musica acaba, a proxima sai **na hora** e o canal continua de onde parou. Na lista aparece
+  TOCANDO / FILA: PRONTA / FILA: CARREGANDO com a barra do quanto ja carregou. Memoria: ~12 MB por
+  musica da fila. Uma musica que falhou na fila e pulada sem esperar de novo.
+- **Começo rápido**: a resolucao do endereco (~3 s, o que mais atrasava) fica guardada por 25 min e é
+  usada pelo player, pelo celular (Host) e pela copia local; os 3 primeiros resultados de uma busca já
+  são resolvidos em segundo plano. Tocar um deles começa em ~0,5 s em vez de ~3 s.
+- **Salvar uma copia** (acao secundaria, sempre escolhida por voce): fila em segundo plano com
+  **várias músicas ao mesmo tempo** (metade dos núcleos do processador, de 2 a 6), reaproveitando o
+  que a reproducao ou a busca já resolveram. Pilula no canto inferior direito (clique = abrir a pasta
+  ou cancelar). O arquivo e montado numa pasta temporaria do cache e so vai para a pasta final
   (`<Musicas>/Remix Online/<playlist>/`, configuravel) quando termina. MP3, M4A ou formato original,
   com titulo/artista/capa. Terminou: a entrada da playlist passa a apontar para o arquivo.
-- **Streaming ou download**: Configuracoes > ONLINE ("AO TOCAR: STREAMING / BAIXAR") vale para tudo;
-  cada playlist pode ter o proprio modo (pilula "ONLINE: ..." na barra da playlist ou botao direito no
-  card); botao direito numa musica online tem "Baixar". No modo baixar ela ja toca por streaming
-  enquanto baixa.
-- **Diario** (`remix/online/estado-XXXX.json` no cache: `~/.cache` no Linux, `%TEMP%\remix-cache` no
-  Windows): gravado no maximo 1x por segundo e so quando algo muda, com o que esta tocando, como
-  (URL direta ou pipe do yt-dlp), onde (memoria), minuto, % do buffer, cada canal da fila (tocando ou
-  fila, estado, ate onde recebeu) e cada download
-  (status, %, pasta temporaria, destino). Ao abrir, o app le o diario, apaga downloads que ficaram
-  pela metade (sem mexer nos de outro Remix aberto) e lembra a ultima musica online: ela aparece
-  selecionada e o streaming recomeca do inicio ao apertar play.
+- **Tocar ou salvar**: Configuracoes > FONTES EXTERNAS ("AO TOCAR: STREAMING / BAIXAR") vale para
+  tudo; cada playlist pode ter o proprio modo (pilula "ONLINE: ..." na barra da playlist ou botao
+  direito no card); botao direito numa musica online tem "Salvar copia". Nesse modo ela ja toca
+  enquanto a copia e feita.
+- **Diario** (`remix/online/estado-XXXX.json` no cache, em `~/.cache`): gravado no maximo 1x por
+  segundo e so quando algo muda, com o que esta tocando, como (URL direta ou pipe da CLI), onde
+  (memoria), minuto, % do buffer, cada canal da fila (tocando ou fila, estado, ate onde recebeu) e
+  cada copia em andamento (status, %, pasta temporaria, destino). Ao abrir, o app le o diario, apaga
+  copias que ficaram pela metade (sem mexer nas de outro Remix aberto) e lembra a ultima musica
+  online: ela aparece selecionada e a reproducao recomeca do inicio ao apertar play.
 
-Precisa de **yt-dlp**, **ffmpeg** e de um "JavaScript runtime" que o YouTube passou a exigir (**Deno 2.3+**
-ou **Node.js 22+**). A versao portatil traz um instalador (com as opcoes **`--stems`**, ~1 GB — um Python isolado
-só para o Remix com PyTorch de CPU e o [Demucs](https://github.com/facebookresearch/demucs), da Meta, código
-aberto; e **`--discord`**, ~60 MB — Node.js 22 e os pacotes do bot do Discord. Ele também instala o `pactl`, que o
-Soundpad usa para criar o microfone virtual):
+### O que voce precisa ter instalado
 
-- **Linux:** `bash instalar-dependencias.sh` (na pasta portatil). Reconhece a distro e usa o gerenciador dela (apt no
-  Debian/Ubuntu/Mint, dnf no Fedora/Nobara/RHEL, pacman no Arch/Manjaro/CachyOS, zypper no openSUSE, xbps no Void,
-  eopkg no Solus). Quando o yt-dlp ou o JavaScript runtime da distro sao antigos, em sistema imutavel (Bazzite,
-  Silverblue, SteamOS) ou sem sudo, baixa as versoes oficiais do yt-dlp, do Deno e do ffmpeg para `~/.local/bin` e
-  `~/.deno/bin`. No NixOS mostra o comando do `nix`; `--mostrar` so mostra o que faria.
+O Remix **nao instala, nao baixa e nao distribui** nenhum desses programas — todos vem da sua
+distro (ou de onde voce quiser) e ficam sob o seu controle:
 
-Depois e so abrir o Remix: ele acha os programas sozinho, sem reiniciar. Configuracoes > ONLINE mostra o que foi
-encontrado. Rode o instalador de novo de vez em quando: o YouTube muda e o yt-dlp precisa estar em dia.
+| Programa | Para que |
+|---|---|
+| uma CLI de midia compativel | achar o endereco do audio da fonte publica |
+| `ffmpeg` | decodificar o audio e converter formatos |
+| um "JavaScript runtime" (Deno 2.3+ ou Node.js 22+) | exigido hoje por algumas fontes |
+
+Instale pelo gerenciador da sua distro (`apt`, `dnf`, `pacman`, `zypper`, `xbps`, `eopkg`, `nix`) e
+depois aponte a CLI em **Configuracoes > PROGRAMA DE LINHA DE COMANDO > ESCOLHER O PROGRAMA...**.
+O Remix testa o arquivo na hora, mostra a versao e passa a usar sem reiniciar; `ffmpeg` e o runtime
+ele procura no `PATH`. Mantenha a CLI atualizada pela sua distro — as fontes publicas mudam.
 
 ## Capas dos proprios arquivos
 
@@ -265,21 +289,21 @@ por voce > capa do arquivo > imagem da pasta (`cover.jpg` etc.). M4A tambem most
 Baixe o codigo com `git clone https://github.com/NinjaZinS2/Remix-Linux.git`.
 
 ```bash
-bash linux/shell/fetch-deps.sh    # raylib 5.5 e o zig (compilador) em linux/third_party/
-bash linux/shell/build.sh         # -> linux/build/remix
-bash linux/shell/build.sh --debug # com simbolos, sem otimizacao
+bash linux/src/shell/fetch-deps.sh    # raylib 5.5 e o zig (compilador) em linux/third_party/
+bash linux/src/shell/build.sh         # -> linux/build/remix
+bash linux/src/shell/build.sh --debug # com simbolos, sem otimizacao
 ```
 
 O `build.sh` usa o **zig cc** quando existe (binario compativel com glibc >= 2.27, entao roda em
 distro antiga) e cai no `g++` do sistema com `REMIX_TOOLCHAIN=gcc`. O audio (miniaudio +
 stb_vorbis) e C puro e compila separado; o resto e um unico translation unit
-(`linux/shell/main_linux.cpp`), o que deixa o build simples e rapido.
+(`linux/src/shell/main_linux.cpp`), o que deixa o build simples e rapido.
 
 Pacotes:
 
 ```bash
-bash linux/shell/packaging/build-packages.sh   # .deb, .rpm, AppImage e o zip portatil em linux/dist/
-REMIX_VERSION=1.6.0 REMIX_RELEASE=2 bash linux/shell/packaging/build-packages.sh
+bash linux/src/shell/packaging/build-packages.sh   # .deb, .rpm, AppImage e o zip portatil em linux/dist/
+REMIX_VERSION=1.6.0 REMIX_RELEASE=2 bash linux/src/shell/packaging/build-packages.sh
 ```
 
 > O `dnf`/`apt` nao troca um pacote pela mesma versao-release: ao entregar um build novo com a
@@ -301,8 +325,8 @@ Android nativa é feita: o Remix do PC vira um **servidor** e o celular usa pelo
   então a tela bloqueada do iPhone continua funcionando) e **onda no ritmo** calculada pelo PC. Ajustada para o **Safari do iPhone**: todo botão reage ao toque, a barra
   de posição funciona tocando ou arrastando em qualquer ponto, as folhas abrem o teclado e ficam acima dele, o play volta a
   funcionar depois de um erro e a página do WhatsApp mostra os links até na pré-visualização do iPhone (sem JavaScript).
-- **Online no celular:** buscar e ouvir YouTube Music, YouTube e SoundCloud pelo celular — o **PC** roda o yt-dlp e o
-  ffmpeg e manda só o áudio; playlists do PC com músicas online também tocam. O celular nunca fala com esses sites.
+- **Online no celular:** buscar e ouvir YouTube Music, YouTube e SoundCloud pelo celular — o **PC** roda a CLI
+  configurada e o ffmpeg e manda só o áudio; playlists do PC com músicas online também tocam. O celular nunca fala com esses sites.
   Dá também para **colar um link de playlist ou álbum** (Spotify, YouTube, YouTube Music, Deezer, Apple Music,
   SoundCloud, Bandcamp): o PC resolve e o celular salva tudo como playlist dele com um toque.
 - **Rede local e internet:** pelo mesmo roteador (Wi-Fi ou cabo) ou por um **túnel Cloudflare** (HTTPS, sem abrir porta,
@@ -334,8 +358,8 @@ Android nativa é feita: o Remix do PC vira um **servidor** e o celular usa pelo
   parar) — ninguém atrapalha quem está ouvindo. Quem pediu a música pode pular a própria.
 - No PC, **▶ DISCORD em cima da capa** (card de música ou de playlist) toca na hora onde você está numa chamada; o painel
   **DISCORD** mostra e controla o que toca em cada servidor. O Host do celular continua separado.
-- Precisa do **Node.js 22.12+** e do discord.js (instalador de dependências com a opção do Discord, ou **INSTALAR BOT** no
-  painel). O token fica protegido (DPAPI no Windows, arquivo só do seu usuário no Linux). Passo a passo, comandos e
+- Precisa do **Node.js 22.12+** e do `discord.js`, instalados por você (`npm i discord.js @discordjs/voice` na pasta
+  `discord/` do Remix). O painel mostra o que falta e o comando a rodar. O token fica protegido (DPAPI no Windows, arquivo só do seu usuário no Linux). Passo a passo, comandos e
   segurança em [linux/docs/DISCORD.md](linux/docs/DISCORD.md).
 
 ## Segurança de arquivos (planejado)
@@ -348,20 +372,33 @@ A estrutura para o porte Android (casca raylib reaproveitada, toolchain pinado e
 
 ## Linux (portátil, .deb, .rpm e AppImage)
 
-A versao Linux vive em `linux/` (raylib) e compartilha com o Windows o nucleo inteiro que
-esta em `comum/`. A casca Windows e `windows/` (GDI+/WinHTTP). Guia completo em
-[linux/shell/README-LINUX.md](linux/shell/README-LINUX.md).
+O nucleo (`linux/src/core/`) e independente de sistema; a casca Linux (`linux/src/shell/`) usa
+raylib, X11/Wayland e MPRIS. Guia completo em
+[linux/src/shell/README-LINUX.md](linux/src/shell/README-LINUX.md).
 
 Rodando de dentro da pasta do projeto, o app usa essa pasta como "casa" (`config.ini`,
 `assets/`, `Musica/`). `bash linux/RODAR.sh` compila sozinho se o codigo mudou e abre.
 
 ```bash
-linux/shell/fetch-deps.sh            # raylib 5.5 (+ patch do GLFW) + zig + headers X11/Wayland, tudo em third_party/ (sem root)
-linux/shell/build.sh                 # -> build/remix e ./remix
-linux/shell/packaging/build-packages.sh   # -> dist/*.deb, dist/*.rpm, dist/*-portable.zip e dist/Remix-*.AppImage
-linux/shell/build-appimage.sh        # so o AppImage (um arquivo que roda em qualquer distro)
+linux/src/shell/fetch-deps.sh            # raylib 5.5 (+ patch do GLFW) + zig + headers X11/Wayland, tudo em third_party/ (sem root)
+linux/src/shell/build.sh                 # -> build/remix e ./remix
+linux/src/shell/packaging/build-packages.sh   # -> dist/*.deb, dist/*.rpm, dist/*-portable.zip e dist/Remix-*.AppImage
+linux/src/shell/build-appimage.sh        # so o AppImage (um arquivo que roda em qualquer distro)
 ```
 
-O binario exige so glibc >= 2.27 (Ubuntu 18.04+, Debian 10+, Fedora, etc.).
-Instalado pelo pacote, usa `~/.config/remix/` para config/capas; com um
-`config.ini` ao lado do binario ele roda em modo portatil.
+## Como o projeto é organizado por dentro
+
+- [linux/docs/ARQUITETURA.md](linux/docs/ARQUITETURA.md) — as camadas, a fronteira que executa
+  programa externo e como conferir que nada escapa dela.
+- [linux/docs/CONFORMIDADE.md](linux/docs/CONFORMIDADE.md) — a lista de verificação do projeto.
+- [linux/docs/MUDANCAS-PARA-O-WINDOWS.md](linux/docs/MUDANCAS-PARA-O-WINDOWS.md) — o mesmo, para
+  quem mantém a casca Windows.
+
+## Licença
+
+Apache License 2.0 — veja [LICENSE](LICENSE).
+
+O Remix reproduz os arquivos que estão no seu computador e, quando você configura uma CLI compatível,
+o que essa CLI resolve a partir de fontes públicas. Nenhum programa de terceiros é distribuído,
+embutido ou baixado por este repositório, e o uso das fontes externas é responsabilidade de quem as
+configura.

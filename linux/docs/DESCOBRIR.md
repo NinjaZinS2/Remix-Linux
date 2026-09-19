@@ -9,7 +9,7 @@ Da **API pública do Deezer** (`api.deezer.com`): sem conta, sem login e sem cha
 desenvolvedor. De lá vêm só **metadados**: nome da música, artista, capa, tipo e o link.
 
 **Nada disso toca música.** Quem toca e baixa continua sendo o motor online de sempre
-(yt-dlp): ao clicar num cartão, o Remix procura aquela música e toca **inteira** — e não o
+(a CLI de mídia que o usuário configurou): ao clicar num cartão, o Remix procura aquela música e toca **inteira** — e não o
 trecho de 30 segundos que as APIs entregam.
 
 Se o PC estiver sem internet, a tela abre do mesmo jeito com o que já tinha sido buscado

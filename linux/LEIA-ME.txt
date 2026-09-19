@@ -1,24 +1,31 @@
-REMIX PLAYER
-============
+REMIX PLAYER - VERSAO LINUX
+===========================
 
-SO QUER USAR?   baixe em https://github.com/EchoGroupStudio/Remix/releases
-                Windows: zip portatil (extraia e abra o Remix.exe)
-                Linux: AppImage (qualquer distro), .deb, .rpm ou zip portatil
-                Musica online: rode INSTALAR-DEPENDENCIAS.bat (Windows) ou instalar-dependencias.sh (Linux)
+SO QUER USAR?   baixe em https://github.com/NinjaZinS2/Remix-Linux/releases
+                AppImage (qualquer distro), .deb, .rpm ou zip portatil
 
-  windows\      versao Windows: codigo, COMPILAR.bat (clique 2x) e RODAR.bat
-  linux/        versao Linux: codigo, RODAR.sh, scripts de build e de pacotes (.deb/.rpm/AppImage)
-  comum/        codigo compartilhado pelos dois (player, biblioteca, playlists, musica online, layout, config)
-  assets/       imagens, fontes e temas usados pelos dois
-  docs/         documentacao extra (plano do porte, comparativo Windows x Linux) e telas
+O QUE TEM AQUI (tudo do app fica dentro de linux/):
+
+  src/core/     o nucleo: biblioteca, playlists, player, fontes externas, letras,
+                novidades, Host (independente de sistema operacional)
+  src/shell/    a casca Linux (raylib, X11/Wayland, MPRIS) + scripts de build e pacotes
+  config/       config.exemplo.ini: todas as chaves de configuracao, comentadas
+  assets/       fontes, icones, temas e sons
+  docs/         documentacao extra e telas
   Musica/       suas musicas no modo portatil
 
 Criados na hora (nao vem no repositorio):
-  third_party/  compiladores e bibliotecas baixados pelos scripts (zig, raylib, MinGW...)
+  third_party/  raylib e o compilador, baixados por src/shell/fetch-deps.sh
   build/, dist/ saida da compilacao e pacotes
   config.ini, covers.ini, artists.ini, playlists/   configuracao, capas, artistas e playlists
 
-COMPILAR NO WINDOWS?   abra windows\LEIA-ME.txt  -  resumo: clique 2x em windows\COMPILAR.bat
-COMPILAR NO LINUX?     abra linux/LEIA-ME.txt    -  resumo: bash linux/RODAR.sh
+COMPILAR:   bash linux/src/shell/fetch-deps.sh   (uma vez)
+            bash linux/src/shell/build.sh        -> linux/build/remix
+            bash linux/RODAR.sh                  (compila se mudou e abre)
 
-Detalhes e novidades: README.pt-BR.md (portugues), README.md (ingles) e linux/README-LINUX.md.
+FONTES EXTERNAS (opcional): o Remix nao instala nem baixa programa nenhum. Se quiser buscar
+e ouvir de fontes externas, instale pela sua distro uma CLI de midia compativel, o ffmpeg e
+um JavaScript runtime (Deno 2.3+ ou Node.js 22+), e aponte o caminho da CLI em
+Configuracoes > PROGRAMA DE LINHA DE COMANDO.
+
+Detalhes e novidades: README.md (na raiz) e linux/src/shell/README-LINUX.md.

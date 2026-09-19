@@ -19,7 +19,7 @@ O Remix cria um **microfone virtual** no PipeWire ou no PulseAudio (com o `pactl
 
 Ao **desligar** (ou fechar o Remix) os dois dispositivos somem. Se o Remix fechar à força, na
 próxima vez ele reaproveita os que ficaram. Precisa do `pactl` (pacote `pulseaudio-utils`, ou
-`libpulse` no Arch): o instalador de dependências instala.
+`libpulse` no Arch): instale pela sua distro se faltar.
 
 ## Windows
 

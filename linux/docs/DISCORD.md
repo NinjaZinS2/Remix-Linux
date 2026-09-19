@@ -3,31 +3,29 @@
 O Remix do PC pode rodar **o seu próprio bot de música** no Discord. Quem está no servidor usa
 comandos como `/tocar`, `/fila` e `/pular` — igual aos bots de música conhecidos — mas **quem faz o
 trabalho é o seu PC**, com os mesmos mecanismos do Remix: as suas playlists, a busca online
-(yt-dlp), os links do Spotify/Deezer/Apple Music e os efeitos (slow, speed, reverb, grave, 8D).
+(a CLI de mídia configurada), os links do Spotify/Deezer/Apple Music e os efeitos (slow, speed, reverb, grave, 8D).
 
 É **só no PC** (Windows e Linux). O **Host do celular** é outra coisa, com outras regras: o bot do
 Discord não mexe nos aparelhos vinculados nem no que eles podem ver.
 
 ## Como ligar (uma vez só)
 
-1. **Instale o bot no PC.** Rode o instalador de dependências e escolha o bot do Discord:
-   - Linux: `bash instalar-dependencias.sh --discord` (usa o Node.js do sistema se for 22.12 ou mais
-     novo; senão baixa o Node 22 oficial, conferindo o SHA-256, em `~/.local/share/remix/node`).
-     Os pacotes do bot ficam em `~/.local/share/remix/discord`.
-   - Windows: `INSTALAR-DEPENDENCIAS.bat /discord` (Node.js 22 portátil e os pacotes do bot dentro
-     da pasta do Remix, em `assets\tools\node` e `assets\tools\discord`).
-   - Se você já tem o Node.js 22.12+, dá para instalar pelo próprio app: painel **DISCORD** >
-     **INSTALAR BOT**.
-2. **Crie o bot no Discord.** Painel **DISCORD** > **ABRIR O PORTAL** (ou
+1. **Instale o Node.js 22.12+** pela sua distro (`dnf install nodejs`, `apt install nodejs`,
+   `pacman -S nodejs npm`...). O Remix não instala nem baixa o Node.js: ele usa o que já está na
+   máquina.
+2. **Traga as bibliotecas do bot.** Painel **DISCORD** > **BIBLIOTECAS DO BOT (npm)**: o Remix roda
+   o **seu** npm (`npm i discord.js @discordjs/voice`) e guarda os pacotes na pasta de dados do
+   Remix (`~/.local/share/remix/discord`). Dá no mesmo rodar esse comando à mão nessa pasta.
+3. **Crie o bot no Discord.** Painel **DISCORD** > **ABRIR O PORTAL** (ou
    <https://discord.com/developers/applications>) > **New Application** > dê um nome > aba **Bot** >
    **Reset Token** > **Copy**. Se só você for convidar o bot, desligue **Public Bot** nessa aba.
    Não precisa ligar nenhuma "Privileged Gateway Intent".
-3. **Cole o token no Remix:** **DEFINIR TOKEN...** > Ctrl+V > Enter. Ele aparece só como bolinhas,
+4. **Cole o token no Remix:** **DEFINIR TOKEN...** > Ctrl+V > Enter. Ele aparece só como bolinhas,
    fica guardado neste PC e nunca vai para a tela, o registro ou outro lugar.
-4. **LIGAR BOT.** Quando conectar, **COPIAR CONVITE** copia o link de convite (com as permissões
+5. **LIGAR BOT.** Quando conectar, **COPIAR CONVITE** copia o link de convite (com as permissões
    certas: ver canais, mandar mensagens, links embutidos, conectar e falar). Abra no navegador,
    escolha o servidor e autorize.
-5. No servidor, digite `/`: os comandos do Remix aparecem (na primeira vez pode levar um minuto).
+6. No servidor, digite `/`: os comandos do Remix aparecem (na primeira vez pode levar um minuto).
 
 O bot volta sozinho quando você abre o Remix, se estava ligado quando você fechou.
 
@@ -94,7 +92,7 @@ música troca.
 - Cada pessoa: **15 comandos a cada 30 s** e **uma busca por vez**; o PC faz no máximo **4 buscas**
   ao mesmo tempo.
 - O bot sai da chamada depois de **3 min sozinho** ou **5 min parado** sem nada na fila.
-- Cinco músicas seguidas que não tocam: o bot para e avisa (normalmente yt-dlp ou ffmpeg velhos).
+- Cinco músicas seguidas que não tocam: o bot para e avisa (normalmente a CLI ou o ffmpeg desatualizados).
 
 ## Como funciona
 
@@ -124,7 +122,7 @@ Discord  <->  node bot.mjs (discord.js + @discordjs/voice)  <-- JSON por stdin/s
   stdin (nunca por argumento ou variável de ambiente) e é apagado do registro se aparecer.
   **APAGAR TOKEN** remove do PC. Se o token vazar: Developer Portal > Bot > **Reset Token**.
 - **Links de quem usa o bot:** só de fontes conhecidas (YouTube, YouTube Music, SoundCloud, Spotify,
-  Deezer, Apple Music, Bandcamp). Endereço qualquer (site, IP da sua rede) é recusado: o yt-dlp do
+  Deezer, Apple Music, Bandcamp). Endereço qualquer (site, IP da sua rede) é recusado: a CLI do
   seu PC não vira um "leitor de URL" para estranhos.
 - **Arquivos do PC:** só os das playlists marcadas **NO BOT: SIM**. Nada fora delas aparece.
 - As mensagens do bot **nunca mencionam ninguém** (um título com `@everyone` não pinga o servidor).
@@ -157,8 +155,8 @@ Pronto. O campo vazio desliga. O ID fica no `config.ini` (`RpcAppId=`).
 ## Problemas comuns
 
 - **"Token inválido"**: gere outro (Reset Token) e cole de novo.
-- **"Node.js 22.12+ não encontrado"**: rode o instalador de dependências com a opção do Discord.
-- **"Falta instalar o bot"**: **INSTALAR BOT** no painel (ou o instalador).
+- **"Node.js 22.12+ não encontrado"**: instale o Node.js pela sua distro.
+- **"Faltam as bibliotecas do bot"**: **BIBLIOTECAS DO BOT (npm)** no painel.
 - **Os comandos não aparecem**: espere um minuto e reabra o Discord (Ctrl+R). Confira se o convite
   incluiu `applications.commands` (o **COPIAR CONVITE** do Remix já inclui).
 - **"Não tenho permissão para entrar/falar"**: dê ao cargo do bot as permissões Conectar e Falar no

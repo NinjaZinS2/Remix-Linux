@@ -20,7 +20,7 @@ O app já está dividido em duas partes:
 | `comum/` | Toda a lógica: biblioteca, playlists, player (miniaudio), online, layout e cliques (`app_layout.h`, `app_input.h`), configuração, temas, estilos (`app_ui.h`) | **Reaproveita inteiro**, sem mudar |
 | `linux/gfx.h`, `linux/app_state.h`, `linux/app_draw.h`, `linux/app_draw2.h` | A casca de desenho em **raylib** (a mesma API "cara de GDI+" que o Windows usa) | **Reaproveita**: raylib roda no Android (NativeActivity + OpenGL ES 2) |
 | `linux/sys_linux.h` | Diálogos (zenity), inotify, socket de instância única, libcurl, ffmpeg | **Troca** por `android/sys_android.h` (mesma API `sys::`) |
-| `linux/main_linux.cpp` | Janela, laço, CLI, MPRIS, atalhos X11 | **Troca** por `android/main_android.cpp` (laço com toque, densidade, permissões) |
+| `linux/main_linux.cpp` | Janela, laço, diálogos, MPRIS, atalhos X11 | **Troca** por `android/main_android.cpp` (laço com toque, densidade, permissões) |
 | `windows/` | Win32 + GDI+ | Não entra |
 | `comum/audio_backend.c` (miniaudio) | Saída de som | **Reaproveita**: miniaudio tem backend AAudio e OpenSL ES |
 
@@ -121,7 +121,7 @@ comportamento da coluna "fase 1".
 | `PlatformPick*` (pasta/imagem/arquivos) | responde "cancelado" | SAF |
 | `PlatformHttpGet` / `sys::HttpGet` | desligado (sem busca online, sem capa da internet) | `HttpURLConnection` por JNI, ou libcurl estática pinada |
 | `PlatformHaveFfmpeg` / transcodificação | não (só mp3, ogg, wav, flac nativos) | ffmpeg estático no APK (`lib/<abi>/libffmpeg.so` executável) — pesado, avaliar |
-| Online (yt-dlp) | não existe no Android (Python) | **Host do PC** (`docs/HOST.md`) ou `youtubedl-android` com auto-atualização (seção 8) |
+| Fontes externas (CLI do usuário) | não existe no Android (Python) | **Host do PC** (`docs/HOST.md`), que roda a CLI na máquina do usuário (seção 8) |
 | `PlatformTrash` | não (apagar de vez é perigoso; devolve falso) | MediaStore delete por JNI |
 | `PlatformOpenFolder`, clipboard, atalhos globais, minimizar/esconder, MPRIS | vazios | clipboard por JNI |
 | Instância única / IPC | sempre "sou a única" | — |
@@ -166,72 +166,48 @@ apontando para a página, ou a PWA "instalada" pelo Chrome) sai em um dia e não
 precisa de nada disto — pode ser a primeira versão na loja enquanto o porte
 nativo amadurece. Os dois caminhos não se excluem.
 
-## 8. Ferramentas que quebram sozinhas: atualização automática (obrigatória)
+## 8. Ferramentas de runtime: quem instala é o usuário
 
-Toolchain pinado (seção 3) é uma coisa; **ferramentas de runtime** são outra. yt-dlp
-quebra toda vez que o YouTube muda algo, e a versão de ontem para de funcionar sem o
-app ter culpa. Então a regra é:
+Toolchain pinado (seção 3) é uma coisa; **ferramentas de runtime** são outra. A CLI de mídia
+que resolve fontes externas quebra toda vez que um site muda algo, e a versão de ontem para de
+funcionar sem o app ter culpa. A regra do projeto:
 
 - **Build**: nada muda sozinho (NDK, raylib, miniaudio pinados).
-- **Runtime**: o que fala com serviços de fora **se atualiza sozinho**, sem esperar
-  uma versão nova do app.
+- **Runtime**: o Remix **não instala, não baixa e não atualiza** ferramenta nenhuma. Ele só
+  executa o programa que o usuário instalou e apontou nas configurações, e avisa quando falta.
 
-### 8.1 O que precisa se atualizar
+### 8.1 O que o Remix espera encontrar (instalado pelo usuário)
 
-| Peça | Por que quebra | Como se atualiza sozinha |
+| Peça | Para que | Quem cuida |
 |---|---|---|
-| yt-dlp | YouTube/SoundCloud mudam a página e a assinatura | `yt-dlp -U` (ele se substitui) ou baixar o binário/`.zip` mais novo do GitHub Releases |
-| Deno / Node (runtime JS do yt-dlp) | o yt-dlp passa a exigir versão mínima nova | checar a versão mínima que o yt-dlp pede e baixar a release |
-| ffmpeg | raramente; só quando um formato novo aparece | baixar a build estática mais nova |
-| cloudflared (túnel do Host) | protocolo do túnel evolui | GitHub Releases da Cloudflare |
-| **o próprio app** | correções do Remix | checar `releases/latest` do repositório e avisar |
+| CLI de mídia compatível | resolver o endereço do áudio da fonte pública | o usuário, pelo gerenciador da distro |
+| Deno / Node | "JavaScript runtime" exigido por algumas fontes | o usuário |
+| ffmpeg | decodificar e converter | o usuário |
+| cloudflared (túnel do Host) | túnel HTTPS opcional | o usuário |
+| **o próprio app** | correções do Remix | checagem opcional de `releases/latest`, só avisando |
 
-### 8.2 Como fazer no Android sem Gradle e sem loja
+Quando a CLI falha por erro de extração, o Remix mostra a mensagem de erro e sugere atualizar o
+programa pela distro — ele não roda atualização por conta própria.
 
-O Android não roda Python, então **não existe yt-dlp "de verdade" no celular**. As duas
-saídas, da mais simples para a mais completa:
+### 8.2 No Android
 
-1. **Deixar o online com o PC (Host).** O celular usa o site do Host (`docs/HOST.md`):
-   quem roda yt-dlp é o PC, e o PC já atualiza o yt-dlp sozinho (o Remix tenta
-   `yt-dlp -U` quando uma busca falha por erro de extração, e o instalador baixa sempre
-   a última versão). O app Android v1 não precisa de nada disso — é o que recomendamos.
-2. **yt-dlp no aparelho com `youtubedl-android`** (yausername): empacota um Python
-   embutido e expõe `YoutubeDL.getInstance().updateYoutubeDL(context)` — o yt-dlp se
-   atualiza por dentro do app, sem versão nova na loja. Custo: é uma biblioteca Java/AAR
-   (o APK vira `hasCode="true"`, precisa de uma classe Java pequena e do `d8`, mas
-   continua sem Gradle: baixe o `.aar` pinado, extraia `classes.jar` + `jni/`, compile
-   com `javac` e junte com `d8`). O `build-android.sh` do zip já tem o lugar marcado
-   para esse passo.
+O Android não roda Python, então esse tipo de CLI não existe no aparelho. O caminho é o
+**Host** (`docs/HOST.md`): o celular usa o site servido pelo PC, e quem executa a CLI é o PC,
+com o programa que o dono da máquina instalou. Nada de empacotar um baixador dentro do APK:
+o app não embute nem distribui ferramenta de terceiros.
 
-### 8.3 Estrutura do atualizador (vale para os dois caminhos)
+### 8.3 Aviso de versão nova do app
 
 ```
 android/updater/
-├── AtualizadorRemix.java   checa GitHub Releases, baixa para o cache e avisa
-└── tools_update.h          (C++) a mesma lógica pelo HTTP da casca, quando não houver Java
+└── AtualizadorRemix.java   checa releases do Remix e avisa (não instala nada sozinho)
 ```
 
-Regras do atualizador (estão no esqueleto do zip, em `tools_update.h`):
-
-- **Quando**: ao abrir (no máximo 1x por dia, `ultima_checagem` em `config.ini`) e
-  **na hora que uma ferramenta falha** (erro de extração do yt-dlp = "atualiza e tenta
-  de novo uma vez").
-- **De onde**: só de fontes fixas e HTTPS — `api.github.com/repos/<dono>/<repo>/releases/latest`
-  dos projetos oficiais (yt-dlp/yt-dlp, denoland/deno, cloudflare/cloudflared,
-  EchoGroupStudio/Remix). Nunca de um link vindo de fora.
-- **Como**: baixa em `<cache>/tools/<nome>.part`, confere o tamanho (e o SHA-256 quando
-  o release publica), troca por rename atômico, guarda a versão anterior em
-  `<nome>.antigo` para voltar se a nova não abrir.
-- **Silencioso para ferramentas, com aviso para o app**: ferramenta nova instala sem
-  perguntar; app novo mostra "Tem versão nova (1.x.y): abrir a página" — no Android sem
-  loja o app não se substitui sozinho (precisaria de `REQUEST_INSTALL_PACKAGES` e um
-  `FileProvider`, que é código Java); abrir a página de download é o caminho sem código.
-- **Falhou?** Continua com a versão que tem e tenta de novo no dia seguinte. Nunca
-  bloqueia o app por causa de atualização.
-
-O mesmo atualizador serve para o **Windows e o Linux**: o Remix do PC passa a rodar
-`yt-dlp -U` sozinho (a partir da 1.4.x, ao falhar uma busca) — a regra "runtime se
-atualiza sozinho" vale em todo lugar.
+- **Quando**: ao abrir, no máximo 1x por dia (`ultima_checagem` no `config.ini`).
+- **De onde**: só `api.github.com/repos/NinjaZinS2/Remix-Linux/releases/latest`, por HTTPS.
+  Nunca de um link vindo de fora.
+- **O que faz**: mostra "Tem versão nova (1.x.y): abrir a página". Quem baixa e instala é o
+  usuário. Falhou a checagem? Segue normal e tenta de novo no dia seguinte.
 
 ## 9. Versões novas do Android (o que já está previsto)
 

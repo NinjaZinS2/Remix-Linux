@@ -1,0 +1,21 @@
+Package: remix
+Version: @VERSION@
+Section: sound
+Priority: optional
+Architecture: @ARCH@
+Depends: libc6 (>= @GLIBC@)
+Recommends: libcurl4 | libcurl4t64 | libcurl3-gnutls, zenity | kdialog, hicolor-icon-theme, ffmpeg
+Suggests: nodejs
+Installed-Size: @SIZE@
+Maintainer: Sodre <103298328+NinjaZinS2@users.noreply.github.com>
+Description: Remix Player - player de musica MP3/WAV com visual neon
+ Player de musica para desktop com biblioteca por pasta (ou varredura
+ automatica), capas personalizadas (arquivo local ou busca na internet),
+ temas, efeitos visuais (particulas, LED, glitch, linha corredora), onda de
+ audio real e espectro por frequencia. Modos quadrado, CD e vertical.
+ .
+ Porte Linux (raylib + miniaudio) da versao Windows do Remix. O binario e
+ estatico (libc++ embutida) e so depende de glibc >= @GLIBC@; X11/Wayland/OpenGL,
+ libcurl e PulseAudio/PipeWire/ALSA sao carregados em tempo de execucao.
+ .
+ Configuracao e capas ficam em ~/.config/remix.
