@@ -84,6 +84,19 @@ caminho, o app roda o programa uma vez com elas e, se não forem aceitas, para d
 
 Nenhum outro arquivo do núcleo executa a CLI. Conferir é um `grep` (seção 5).
 
+### A outra fronteira: o separador de partes (`stems.h`)
+
+Mesmas regras, outro programa. A pessoa configura uma **linha de comando** com `{entrada}` e
+`{saida}` (`SepCmd` no `config.ini`); o Remix executa, lê a pasta e reconhece cada parte pelo nome
+dos arquivos (vocal, instrumental, bateria, baixo, outros — em português ou inglês), convertendo
+para FLAC no cache. Nada é instalado ou embutido pelo app, e um separador que só faça duas partes
+funciona: as outras ficam marcadas como indisponíveis na interface.
+
+Como separar é a tarefa mais pesada do programa, ela tem **teto de CPU**: `PerfilCpu()` (leve,
+equilibrado, rápido) define quantos núcleos, e `ComLimiteDeCpu()` roda o processo com `nice -n 15`
+e `taskset -c 0-(n-1)`. Assim o limite vale até para um separador que se autoconfigure — dentro do
+`taskset`, o `nproc` dele já enxerga só os núcleos liberados.
+
 ---
 
 ## 3. Degradação graciosa

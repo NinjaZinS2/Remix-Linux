@@ -135,6 +135,9 @@ struct Config {
     // Separador externo: linha de comando que VOCE configura, com {entrada} e {saida}.
     // Vazio = usa o Python isolado que a pessoa tenha instalado antes, se existir.
     std::wstring sepCmd;
+    // Buscar novidades e recomendacoes na internet (catalogo publico do Deezer, so metadados).
+    // Desligado: o Inicio mostra so a sua biblioteca e o app nao fala com a internet sozinho.
+    bool novidadesOnline = true;
     bool shuffle = false;
     bool repeat = false;
 
@@ -455,6 +458,7 @@ struct Config {
             else if (k == L"Fx8D") fx8d = _wtoi(v.c_str());
             else if (k == L"StemsCpu") { stemsCpu = _wtoi(v.c_str()); if (stemsCpu < 1 || stemsCpu > 3) stemsCpu = 1; }
             else if (k == L"SepCmd") sepCmd = v;
+            else if (k == L"Novidades") novidadesOnline = (v != L"0");
             else if (k == L"StemMode") stemMode = (v == L"vocal" || v == L"instrumental" || v == L"bateria" || v == L"baixo" || v == L"outros") ? v : L"";
             else if (k == L"Shuffle") shuffle = (v == L"1");
             else if (k == L"Repeat") repeat = (v == L"1");
@@ -582,6 +586,7 @@ struct Config {
         ls.push_back(L"StemMode=" + stemMode);
         swprintf(b, 64, L"StemsCpu=%d", stemsCpu); ls.push_back(b);
         ls.push_back(L"SepCmd=" + sepCmd);
+        swprintf(b, 64, L"Novidades=%d", novidadesOnline ? 1 : 0); ls.push_back(b);
         ls.push_back(L"Shuffle="); ls.back() += shuffle ? L"1" : L"0";
         ls.push_back(L"Repeat=");  ls.back() += repeat ? L"1" : L"0";
         swprintf(b, 64, L"UIScale=%d", uiScale); ls.push_back(b);

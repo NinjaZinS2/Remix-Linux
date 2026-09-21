@@ -183,6 +183,9 @@ static void DrawSettings(int w,int h){
             btn(R_setStemsCpu,std::wstring(L"CPU: ")+stems::PerfilNome(g_cfg.stemsCpu)+L" ("+std::to_wstring(nuc)+L"/"+std::to_wstring(tot>0?tot:nuc)+L" núcleos)"+seta,g_cfg.stemsCpu>1);
         }
         btn(R_setOnRecheck,L"PROCURAR DE NOVO",false);
+        btn(R_setNovidades,g_cfg.novidadesOnline?L"NOVIDADES NO INÍCIO: LIGADAS":L"NOVIDADES NO INÍCIO: DESLIGADAS",g_cfg.novidadesOnline);
+        gfx::TextRect(g_cfg.novidadesOnline?L"O Início mostra o que está em alta (só metadados de um catálogo público). Desligado, mostra só a sua biblioteca.":L"O Remix não busca novidades: o Início monta as fileiras com a sua própria biblioteca.",
+            RectF((float)R_setNovidades.right+14,(float)R_setNovidades.top,(float)(R_setOnFolder.right-R_setNovidades.right-14),(float)(R_setNovidades.bottom-R_setNovidades.top)),sm,gray,false,gfx::Near,true,gfx::EllipsisChar);
         gfx::TextRect(okT?L"Spotify, Deezer e Apple Music: o Remix lê a lista e acha cada música no YouTube Music.":L"Instale pela sua distro o ffmpeg e, se quiser fontes externas, uma CLI compatível — depois aponte o caminho dela aqui embaixo.",
             RectF((float)R_setOnRecheck.right+14,(float)R_setOnRecheck.top,(float)(R_setOnFolder.right-R_setOnRecheck.right-14),(float)(R_setOnRecheck.bottom-R_setOnRecheck.top)),sm,gray,false,gfx::Near,true,gfx::EllipsisChar);
     }

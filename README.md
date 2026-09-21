@@ -59,18 +59,32 @@ que **você** instala e configura — nada é distribuído, baixado ou embutido 
 Reproduzir é a ação principal: o áudio é decodificado **em memória** (chunked), sem passar pelo
 disco. Salvar uma cópia é uma ação secundária, sempre escolhida por você.
 
+## Separar em partes (opcional)
+
+O Remix toca vocal, bateria, baixo ou "só a música" usando um **separador que você instala e
+aponta** em *Configurações > SEPARAR EM PARTES*: a linha de comando leva `{entrada}` (o arquivo) e
+`{saida}` (a pasta), e o Remix reconhece cada parte pelo nome dos arquivos que aparecerem. Dá para
+trocar de motor quando quiser — inclusive por um mais leve ou mais preciso — sem mexer no app, e
+separadores que só fazem vocal + instrumental funcionam (as outras partes ficam marcadas como
+indisponíveis).
+
+Separar é a tarefa mais pesada do programa, então tem **teto de CPU**: o perfil (LEVE, o padrão,
+EQUILIBRADO ou RÁPIDO) decide quantos núcleos a separação pode usar, e o processo roda com
+prioridade baixa preso a esses núcleos. No perfil leve, com 12 núcleos, a separação fica em 3 — dá
+para jogar enquanto isso.
+
 <p align="center">
-  <img src="linux/docs/screenshots/inicio.png" alt="Tela inicial com as novidades (Linux)" width="49%">
-  <img src="linux/docs/screenshots/biblioteca.png" alt="Biblioteca com o painel Tocando agora (Linux)" width="49%">
+  <img src="linux/docs/screenshots/inicio.png" alt="Tela inicial e o painel Tocando agora" width="49%">
+  <img src="linux/docs/screenshots/biblioteca.png" alt="Biblioteca em lista, com capa, origem e duração" width="49%">
 </p>
 <p align="center">
-  <img src="linux/docs/screenshots/descobrir.png" alt="Descobrir: navegar por gênero" width="32%">
+  <img src="linux/docs/screenshots/grade.png" alt="Biblioteca em grade" width="32%">
   <img src="linux/docs/screenshots/letra.png" alt="Letra sincronizada" width="32%">
-  <img src="linux/docs/screenshots/busca-online.png" alt="Procurar playlists prontas online" width="32%">
+  <img src="linux/docs/screenshots/classico.png" alt="Estilo clássico" width="32%">
 </p>
-<p align="center">
-  <img src="linux/docs/screenshots/classico.png" alt="Estilo clássico, que continua" width="60%">
-</p>
+
+<sub>As telas usam uma <b>biblioteca de exemplo</b>: músicas, artistas, capas e letra criados para a
+documentação. Nenhuma obra, capa ou foto de terceiros aparece aqui.</sub>
 
 ## Créditos
 
@@ -398,6 +412,10 @@ O app só fala com a internet quando você pede: metadados de novidades e artist
 Deezer), letras (LRCLIB), páginas públicas de Spotify/Apple Music para ler o nome das faixas de um
 link, e a fonte externa que você configurou. O Host é você quem liga, e cada aparelho precisa ser
 autorizado.
+
+Se preferir, desligue **NOVIDADES NO INÍCIO** em *Configurações > FONTES EXTERNAS*: aí o Remix não
+busca nada sozinho e a tela inicial monta as fileiras com a sua própria biblioteca (Sua mistura,
+Tocados recentemente, Da sua biblioteca).
 
 ## Como o projeto é organizado por dentro
 

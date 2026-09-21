@@ -89,6 +89,7 @@ static int HitTest(int x,int y){
         if(PtIn(R_setHostName,x,y)) return Z_SET_HOST_NAME; if(PtIn(R_setHostTunnel,x,y)) return Z_SET_HOST_TUNNEL; if(PtIn(R_setHostLan,x,y)) return Z_SET_HOST_LAN;
         if(PtIn(R_setCli,x,y)) return Z_SET_CLI;
         if(PtIn(R_setCliBuscar,x,y)) return Z_SET_CLI_BUSCAR;
+        if(PtIn(R_setNovidades,x,y)) return Z_SET_NOVIDADES;
         if(PtIn(R_setSep,x,y)) return Z_SET_SEP;
         if(PtIn(R_setSepBuscar,x,y)) return Z_SET_SEP_BUSCAR;
         if(PtIn(R_setStemsCpu,x,y)) return Z_SET_STEMSCPU;
@@ -517,6 +518,11 @@ static void OnLButtonDown(int x,int y){
     if(id==Z_SET_HOST_LAN){ g_cfg.hostLan=!g_cfg.hostLan; g_cfg.Save(); if(host::Running()){ HostStopNow(); HostStartFromCfg(); } return; }
     if(id==Z_SET_CLI){ g_editArtist=true; g_editMode=12; g_editTrack=-1; g_editBuf=g_cfg.mediaCli; return; }
     if(id==Z_SET_CLI_BUSCAR){ PlatformPickProgramAsync(EV_PICK_CLI); return; }   // a pessoa escolhe o arquivo
+    if(id==Z_SET_NOVIDADES){
+        g_cfg.novidadesOnline=!g_cfg.novidadesOnline; g_cfg.Save();
+        SetStatus(g_cfg.novidadesOnline?L"Novidades ligadas: o Início mostra o que está em alta (metadados de catálogo público).":L"Novidades desligadas: o Início mostra só a sua biblioteca, e o app não busca nada sozinho.",4000);
+        g_rxScroll=0; BuildLayout(); return;
+    }
     if(id==Z_SET_SEP){ g_editArtist=true; g_editMode=13; g_editTrack=-1; g_editBuf=g_cfg.sepCmd; return; }
     if(id==Z_SET_SEP_BUSCAR){ PlatformPickProgramAsync(EV_PICK_SEP); return; }
     if(id==Z_SET_STEMSCPU){

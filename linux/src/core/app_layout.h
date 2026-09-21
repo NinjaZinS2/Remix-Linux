@@ -166,12 +166,13 @@ static void LayoutSettings(int w,int h){
     };
     auto sectOnline=[&](int x,int& y,int cw){
         // linha de status (y+50), 2 linhas de botoes, caminho onde salvar, "conferir de novo"
-        sect(x,y,cw,236,L"FONTES EXTERNAS");
+        sect(x,y,cw,276,L"FONTES EXTERNAS");
         int bw=(cw-50)/2;
         R_setOnMode={x+20,y+74,x+20+bw,y+108}; R_setOnFmt={x+30+bw,y+74,x+cw-20,y+108};
         R_setOnSrc={x+20,y+116,x+20+bw,y+150}; R_setOnFolder={x+30+bw,y+116,x+cw-20,y+150};
         R_setOnRecheck={x+20,y+186,x+20+std::min(230,bw),y+218};
-        y+=256;
+        R_setNovidades={x+20,y+226,x+20+bw,y+258};
+        y+=296;
         // caminho da CLI que a pessoa configurou + procurar no sistema
         sect(x,y,cw,186,L"PROGRAMA DE LINHA DE COMANDO (OPCIONAL)");
         R_setCli={x+20,y+112,x+cw-20,y+146};
@@ -422,6 +423,24 @@ static void RxMontarRecentes(){
     }
 }
 
+// "Da sua biblioteca": completa o Inicio com o que a pessoa ja tem (vale muito quando as
+// novidades online estao desligadas ou nao ha internet). Agrupado por artista.
+static void RxMontarBiblioteca(const std::vector<Track>& fonte){
+    g_rxBiblio.clear(); g_rxBiblioChave.clear();
+    if(fonte.empty()) return;
+    std::map<std::wstring,bool> ja;
+    for(auto& ch:g_rxRecentesChave) ja[ch]=true;
+    for(auto& ch:g_rxMisturaChave) ja[ch]=true;
+    std::vector<int> ord;
+    for(size_t i=0;i<fonte.size();i++) if(!ja.count(fonte[i].path)) ord.push_back((int)i);
+    std::sort(ord.begin(),ord.end(),[&](int a,int b){
+        const Track& x=fonte[(size_t)a]; const Track& y=fonte[(size_t)b];
+        int c=_wcsicmp(x.artist.c_str(),y.artist.c_str()); if(c) return c<0;
+        return _wcsicmp(x.title.c_str(),y.title.c_str())<0;
+    });
+    for(int i:ord){ if(g_rxBiblio.size()>=18) break; g_rxBiblio.push_back(i); g_rxBiblioChave.push_back(fonte[(size_t)i].path); }
+}
+
 static void BuildLayoutRemix(int w,int h,int chrome){
     const int topH=SI(56), barH=SI(96), gap=SI(14);
     g_headerH=topH;
@@ -582,18 +601,22 @@ static void BuildLayoutRemix(int w,int h,int chrome){
     int cols=std::max(1,(mw+gapX)/(cardW+gapX));
     int cardH=cardW+SI(56);
     desc::Home home; bool comRecentes=false, comGeneros=false;
-    bool comMistura=false;
+    bool comMistura=false, comBiblio=false;
     if(g_rxPag==RXP_INICIO){
-        desc::Atualizar(false,RxAvisarNovidades); home=desc::Copia();
+        if(g_cfg.novidadesOnline){ desc::Atualizar(false,RxAvisarNovidades); home=desc::Copia(); }
         RxMontarRecentes(); comRecentes=!g_rxRecentes.empty();
         RxMontarMistura((g_libCached&&!g_libTracks.empty())?g_libTracks:g_tracks); comMistura=g_rxMistura.size()>=6;
         RxMontarAtalhos((g_libCached&&!g_libTracks.empty())?g_libTracks:g_tracks);
+        RxMontarBiblioteca((g_libCached&&!g_libTracks.empty())?g_libTracks:g_tracks);
+        comBiblio=!g_rxBiblio.empty();
     }
     else {
         // Descobrir: grade de generos e, dentro de um, as paradas dele
-        desc::AtualizarGeneros(g_rxGenero,g_rxGeneroNome,RxAvisarNovidades);
-        if(!g_rxGenero.empty()) desc::HomeDoGenero(g_rxGenero,home);
-        else comGeneros=true;
+        if(g_cfg.novidadesOnline){
+            desc::AtualizarGeneros(g_rxGenero,g_rxGeneroNome,RxAvisarNovidades);
+            if(!g_rxGenero.empty()) desc::HomeDoGenero(g_rxGenero,home);
+            else comGeneros=true;
+        }
         int by=(int)R_rxMain.top+SI(8);
         R_rxBuscarOn={mxR-(int)S(150),by,mxR,by+SI(32)};
         if(!g_rxGenero.empty()) R_rxVoltar={(int)R_rxBuscarOn.left-(int)S(118),by,(int)R_rxBuscarOn.left-SI(8),by+SI(32)};
@@ -603,6 +626,7 @@ static void BuildLayoutRemix(int w,int h,int chrome){
     std::vector<int> locais;
     if(comMistura) locais.push_back(-3);
     if(comRecentes) locais.push_back(-1);
+    if(comBiblio) locais.push_back(-4);
     if(comGeneros) locais.push_back(-2);
     int nFil=(int)home.fileiras.size()+(int)locais.size();
     int y=(int)R_rxMain.top+SI(46)-g_rxScroll;        // espaco do titulo da pagina
@@ -641,6 +665,7 @@ static void BuildLayoutRemix(int w,int h,int chrome){
         int total = fonte==-1 ? (int)g_rxRecentes.size()
                   : fonte==-2 ? (int)generos.size()
                   : fonte==-3 ? (int)g_rxMistura.size()
+                  : fonte==-4 ? (int)g_rxBiblio.size()
                               : (int)home.fileiras[(size_t)fonte].itens.size();
         if(total<=0) continue;
         bool todos=(fonte==-2);                       // generos: sempre a grade inteira

@@ -202,6 +202,7 @@ static void RxClicarCard(size_t ci,bool tocar){
     }
     if(fonte==-1){ RxTocarLocal(g_rxRecentesChave,(size_t)k.item); return; }
     if(fonte==-3){ RxTocarLocal(g_rxMisturaChave,(size_t)k.item); return; }
+    if(fonte==-4){ RxTocarLocal(g_rxBiblioChave,(size_t)k.item); return; }
     desc::Home h;
     if(g_rxPag==RXP_DESCOBRIR){ if(!desc::HomeDoGenero(g_rxGenero,h)) return; }
     else h=desc::Copia();

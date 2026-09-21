@@ -196,7 +196,7 @@ enum : int {
     Z_EQ_BASE=740, Z_SET_AUTOPLAY=760, Z_SET_SORT=761, Z_SET_SORTDIR=762, Z_EQ_ON=763, Z_EQ_RESET=764,
     Z_AUTOPLAY=765, Z_SORT=766, Z_VOL_ICON=767, Z_FOLDER_BTN=768, Z_CONFIRM_YES=769, Z_CONFIRM_NO=770, Z_PERF_TOGGLE=771, Z_BG_TOGGLE=772, Z_QUIT_BTN=773, Z_SYSMEDIA_TOGGLE=774, Z_TAB_TRACKS=780, Z_TAB_PLAYLISTS=781, Z_SEARCH_BOX=782, Z_SEARCH_CLEAR=783, Z_PL_BACK=784, Z_PL_NEW=785, Z_HK_RESET=786,
     Z_TAB_ONLINE=787, Z_PL_ADD=788, Z_PICK_DONE=789, Z_PICK_CANCEL=790, Z_ACTIVITY=791, Z_SET_ON_MODE=792, Z_SET_ON_FMT=793, Z_SET_ON_SRC=794,
-    Z_SET_ON_FOLDER=795, Z_SET_ON_RECHECK=796, Z_PL_MODE=797, Z_ON_CLOSE=798, Z_ON_QBOX=799, Z_ON_SEARCH=800, Z_ON_ADDALL=801, Z_ON_SRC_BASE=810, Z_ON_TAB_BASE=814, Z_SET_CLI=817, Z_SET_CLI_BUSCAR=818, Z_ON_CFG=819, Z_SET_SEP=820, Z_SET_SEP_BUSCAR=821, Z_SET_STEMSCPU=822,
+    Z_SET_ON_FOLDER=795, Z_SET_ON_RECHECK=796, Z_PL_MODE=797, Z_ON_CLOSE=798, Z_ON_QBOX=799, Z_ON_SEARCH=800, Z_ON_ADDALL=801, Z_ON_SRC_BASE=810, Z_ON_TAB_BASE=814, Z_SET_CLI=817, Z_SET_CLI_BUSCAR=818, Z_ON_CFG=819, Z_SET_SEP=820, Z_SET_SEP_BUSCAR=821, Z_SET_STEMSCPU=822, Z_SET_NOVIDADES=823,
     Z_SETTINGS_STYLE_BASE=820,   // +0 classico, +1 limpo, +2 spotify
     // Host: faixa 22000+ (na 1.4.0 ficaram em 821..838 e colidiam com Z_SETTINGS_STYLE_BASE+1/+2:
     // o botao HOST virava "Limpo" e LIGAR O HOST virava "Spotify + LED"). Os static_assert abaixo travam isso.
@@ -254,7 +254,7 @@ static std::vector<RECT> R_plCards, R_plPlay, R_plShuf;
 static RECT R_tabOnline, R_plAdd, R_plMode, R_pickDone, R_pickCancel, R_activity;
 static RECT R_setOnMode, R_setOnFmt, R_setOnSrc, R_setOnFolder, R_setOnRecheck, R_onlineInfo;
 static RECT R_setCli, R_setCliBuscar;   // FONTES EXTERNAS: caminho da CLI e "procurar no sistema"
-static RECT R_setSep, R_setSepBuscar, R_setStemsCpu;   // SEPARAR EM PARTES: linha de comando, escolher programa e perfil de CPU
+static RECT R_setSep, R_setSepBuscar, R_setStemsCpu, R_setNovidades;   // SEPARAR EM PARTES: linha de comando, escolher programa e perfil de CPU
 static RECT R_setWallChoose, R_setWallClear, R_setCoverBlur;
 static std::vector<RECT> R_themeCirclesSettings, R_runColors, R_playColors, R_navColors;
 static std::vector<RECT> R_partColors, R_ledColors;
@@ -321,6 +321,8 @@ static std::vector<int> g_rxAbertas;       // fileiras expandidas ("ver tudo")
 static std::vector<int> g_rxRecentes;             // "tocados recentemente": indices na lista em tela
 static std::vector<std::wstring> g_rxRecentesChave;   // ...e o caminho/URL de cada um
 static std::vector<int> g_rxMistura;               // "Sua mistura": faixas escolhidas pelo seu gosto
+static std::vector<int> g_rxBiblio;                // "Da sua biblioteca": o que voce tem e ainda nao apareceu
+static std::vector<std::wstring> g_rxBiblioChave;
 static std::vector<std::wstring> g_rxMisturaChave;
 static bool RxOn(){ return g_cfg.uiStyle!=UI_CLASSICO; }
 // ---- duracao das musicas locais (para a lista mostrar o tempo) --------------
