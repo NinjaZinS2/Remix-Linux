@@ -89,6 +89,9 @@ static int HitTest(int x,int y){
         if(PtIn(R_setHostName,x,y)) return Z_SET_HOST_NAME; if(PtIn(R_setHostTunnel,x,y)) return Z_SET_HOST_TUNNEL; if(PtIn(R_setHostLan,x,y)) return Z_SET_HOST_LAN;
         if(PtIn(R_setCli,x,y)) return Z_SET_CLI;
         if(PtIn(R_setCliBuscar,x,y)) return Z_SET_CLI_BUSCAR;
+        if(PtIn(R_setSep,x,y)) return Z_SET_SEP;
+        if(PtIn(R_setSepBuscar,x,y)) return Z_SET_SEP_BUSCAR;
+        if(PtIn(R_setStemsCpu,x,y)) return Z_SET_STEMSCPU;
         if(PtIn(R_setHostCopyTun,x,y)) return Z_SET_HOST_COPYTUN; if(PtIn(R_setHostCopyLan,x,y)) return Z_SET_HOST_COPYLAN; if(PtIn(R_setHostOnline,x,y)) return Z_SET_HOST_ONLINE;
         if(PtIn(R_setHostQrConf,x,y)) return Z_SET_HOST_QRCONF; if(PtIn(R_setHostIpv6,x,y)) return Z_SET_HOST_IPV6;
         for(auto&s:g_setSliders) if(PtIn(s.hit,x,y)) return s.id;
@@ -514,6 +517,13 @@ static void OnLButtonDown(int x,int y){
     if(id==Z_SET_HOST_LAN){ g_cfg.hostLan=!g_cfg.hostLan; g_cfg.Save(); if(host::Running()){ HostStopNow(); HostStartFromCfg(); } return; }
     if(id==Z_SET_CLI){ g_editArtist=true; g_editMode=12; g_editTrack=-1; g_editBuf=g_cfg.mediaCli; return; }
     if(id==Z_SET_CLI_BUSCAR){ PlatformPickProgramAsync(EV_PICK_CLI); return; }   // a pessoa escolhe o arquivo
+    if(id==Z_SET_SEP){ g_editArtist=true; g_editMode=13; g_editTrack=-1; g_editBuf=g_cfg.sepCmd; return; }
+    if(id==Z_SET_SEP_BUSCAR){ PlatformPickProgramAsync(EV_PICK_SEP); return; }
+    if(id==Z_SET_STEMSCPU){
+        g_cfg.stemsCpu=g_cfg.stemsCpu>=3?1:g_cfg.stemsCpu+1; g_cfg.Save();
+        SetStatus(std::wstring(L"Separação: ")+stems::PerfilNome(g_cfg.stemsCpu)+L" ("+std::to_wstring(stems::NucleosDoPerfil())+L" de "+std::to_wstring((int)std::thread::hardware_concurrency())+L" núcleos)",3500);
+        return;
+    }
     if(id==Z_SET_HOST_COPYTUN){ HostCopy(true); return; } if(id==Z_SET_HOST_COPYLAN){ HostCopy(false); return; }
     if(id==Z_SET_HOST_ONLINE){ HostSetOnline(!g_cfg.hostOnline); return; }
     if(id==Z_SET_HOST_QRCONF){ HostSetQrConfirm(!g_cfg.hostQrConfirm); return; }

@@ -177,6 +177,12 @@ static void LayoutSettings(int w,int h){
         R_setCli={x+20,y+112,x+cw-20,y+146};
         R_setCliBuscar={x+20,y+154,x+20+std::min(260,bw),y+186};
         y+=206;
+        // separador de partes (stems): programa configurado e quanta CPU ele pode usar
+        sect(x,y,cw,224,L"SEPARAR EM PARTES / STEMS (OPCIONAL)");
+        R_setSep={x+20,y+112,x+cw-20,y+146};
+        R_setSepBuscar={x+20,y+154,x+20+std::min(260,bw),y+186};
+        R_setStemsCpu={x+30+std::min(260,bw),y+154,x+cw-20,y+186};
+        y+=244;
     };
     auto sectShortcuts=[&](int x,int& y,int cw){
         // uma linha por acao: rotulo | tecla (clique = capturar) | FOCO/GLOBAL; embaixo, restaurar + dicas
@@ -854,7 +860,7 @@ static void LayoutFxPanel(int w,int h){
 // Texto do estado dos stems da faixa atual (duas linhas).
 static void FxStemStatus(std::wstring& l1,std::wstring& l2){
     l1.clear(); l2.clear();
-    if(!stems::InstalledCached()){ l1=L"Separador não instalado: instale o Demucs (pip install demucs)"; l2=L"(Demucs, código aberto, ~1 GB). Os efeitos funcionam sem ele."; return; }
+    if(!stems::InstalledCached()){ l1=L"Nenhum separador configurado: Configurações > SEPARAR EM PARTES (STEMS)"; l2=L"Você escolhe o programa; os efeitos funcionam sem ele."; return; }
     if(g_current<0||g_current>=(int)g_tracks.size()){ l1=L"Toque uma música para separar."; return; }
     std::wstring key=StemKeyCurrent();
     if(stems::Complete(key)){ l1=L"Stems desta música prontos (ficam guardados): trocar de modo é na hora."; return; }

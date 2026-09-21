@@ -1718,7 +1718,7 @@ function reloadCur(){
 function fxDots(v){return h('span',{class:'fxD','aria-hidden':'true'},h('i',{class:v>=1?'on':''}),h('i',{class:v>=2?'on':''}),h('i',{class:v>=3?'on':''}));}
 const STM={t:0,id:''};
 function stemStatusTxt(j){
-  if(!S.stemsOk||(j&&j.instalado===false))return 'O PC não tem o separador de stems (Demucs). Instale o Demucs no PC para usar.';
+  if(!S.stemsOk||(j&&j.instalado===false))return 'O PC não tem um separador configurado. Configure um no Remix do PC para usar.';
   if(!j)return '';
   const e=str(j.estado,20);
   if(e==='pronto')return 'Stems desta música prontos.';
@@ -1772,7 +1772,7 @@ function fxSheet(){
     box.appendChild(grid);
     box.appendChild(h('div',{class:'shCenter'},h('button',{class:'btnS',type:'button',text:'Desligar efeitos',onclick:()=>{for(const k of FXK)S.fx[k[0]]=0;saveFx();updFxBtn();reloadCur();fxSheet();}})));
     box.appendChild(h('h2',{class:'secT',text:'Stems'}));
-    box.appendChild(h('p',{class:'shNote',text:'Separa a música em partes (vocal, bateria, baixo e o resto) no PC, com o Demucs.'}));
+    box.appendChild(h('p',{class:'shNote',text:'Separa a música em partes (vocal, bateria, baixo e o resto) no PC, com o separador configurado lá.'}));
     const chips=h('div',{class:'stemChips'});
     for(const m of STEMS){
       chips.appendChild(h('button',{class:'chip'+(S.stem===m[0]?' on':''),type:'button','aria-pressed':String(S.stem===m[0]),text:m[1],disabled:(!S.stemsOk&&m[0])?true:null,onclick:()=>{

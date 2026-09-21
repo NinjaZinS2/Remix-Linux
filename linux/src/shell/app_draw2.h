@@ -165,6 +165,23 @@ static void DrawSettings(int w,int h){
             btn(R_setCli,L"CAMINHO: "+cam,ok);
             btn(R_setCliBuscar,L"ESCOLHER O PROGRAMA...",false);
         }
+        {   // separador de partes (stems): programa + quanta CPU ele pode usar
+            bool sok=stems::SepExternoOk(); bool velho=!sok&&stems::InstalledCached();
+            std::wstring cmd=g_cfg.sepCmd.empty()?std::wstring(L"(nenhum configurado)"):g_cfg.sepCmd;
+            float lw=(float)(R_setSep.right-R_setSep.left);
+            gfx::TextRect(L"Separa a música em vocal, bateria, baixo e o resto. O Remix não instala nada: você aponta o programa.",
+                          RectF((float)R_setSep.left,(float)R_setSep.top-70,lw,18),sm,gray,false,gfx::Near,false,gfx::EllipsisChar);
+            gfx::TextRect(L"Use {entrada} para o arquivo e {saida} para a pasta; o Remix reconhece as partes pelo nome dos arquivos.",
+                          RectF((float)R_setSep.left,(float)R_setSep.top-53,lw,18),sm,gray,false,gfx::Near,false,gfx::EllipsisChar);
+            gfx::TextRect(L"Separar é pesado: no perfil LEVE ele fica preso a poucos núcleos e não atrapalha jogo nem chamada.",
+                          RectF((float)R_setSep.left,(float)R_setSep.top-36,lw,18),sm,gray,false,gfx::Near,false,gfx::EllipsisChar);
+            gfx::TextRect(sok?(L"Separador pronto: "+stems::SepPrograma()):(velho?std::wstring(L"Usando o separador antigo já instalado neste PC."):(g_cfg.sepCmd.empty()?std::wstring(L"Nenhum separador configurado: os modos de stem ficam desligados."):std::wstring(L"Não achei esse programa (ou ele não é executável)."))),
+                          RectF((float)R_setSep.left,(float)R_setSep.top-19,lw,18),sm,(sok||velho)?white:Argb(255,235,150,110),false,gfx::Near,false,gfx::EllipsisChar);
+            btn(R_setSep,L"COMANDO: "+cmd,sok);
+            btn(R_setSepBuscar,L"ESCOLHER O PROGRAMA...",false);
+            int nuc=stems::NucleosDoPerfil(), tot=(int)std::thread::hardware_concurrency();
+            btn(R_setStemsCpu,std::wstring(L"CPU: ")+stems::PerfilNome(g_cfg.stemsCpu)+L" ("+std::to_wstring(nuc)+L"/"+std::to_wstring(tot>0?tot:nuc)+L" núcleos)"+seta,g_cfg.stemsCpu>1);
+        }
         btn(R_setOnRecheck,L"PROCURAR DE NOVO",false);
         gfx::TextRect(okT?L"Spotify, Deezer e Apple Music: o Remix lê a lista e acha cada música no YouTube Music.":L"Instale pela sua distro o ffmpeg e, se quiser fontes externas, uma CLI compatível — depois aponte o caminho dela aqui embaixo.",
             RectF((float)R_setOnRecheck.right+14,(float)R_setOnRecheck.top,(float)(R_setOnFolder.right-R_setOnRecheck.right-14),(float)(R_setOnRecheck.bottom-R_setOnRecheck.top)),sm,gray,false,gfx::Near,true,gfx::EllipsisChar);
@@ -263,7 +280,7 @@ static void DrawArtistEditor(int w,int h){
     DrawRoundRect(box,14,&pb,&apn,2);
     const float lab=S(13), sm=S(10), txt=S(14);
     Color abr=ToGdi(g_theme.accent), white=C_WHITE, gray=C_GRAY2;
-    const wchar_t* etitle=g_editMode==1?L"RENOMEAR ARQUIVO (no disco)":g_editMode==2?L"NOVA PLAYLIST":g_editMode==4?L"COLAR LINK NA PLAYLIST":g_editMode==5?L"NOVA PLAYLIST A PARTIR DE UM LINK":g_editMode==3?L"RENOMEAR PLAYLIST":g_editMode==6?L"PORTA DO HOST":g_editMode==7?L"PIN DO HOST":g_editMode==8?L"NOME DO PC NO CELULAR":g_editMode==9?L"TOKEN DO BOT DO DISCORD":g_editMode==10?L"CARGO DJ DO DISCORD":g_editMode==11?L"APPLICATION ID (RICH PRESENCE)":g_editMode==12?L"PROGRAMA DE LINHA DE COMANDO":L"EDITAR NOME DO ARTISTA";
+    const wchar_t* etitle=g_editMode==1?L"RENOMEAR ARQUIVO (no disco)":g_editMode==2?L"NOVA PLAYLIST":g_editMode==4?L"COLAR LINK NA PLAYLIST":g_editMode==5?L"NOVA PLAYLIST A PARTIR DE UM LINK":g_editMode==3?L"RENOMEAR PLAYLIST":g_editMode==6?L"PORTA DO HOST":g_editMode==7?L"PIN DO HOST":g_editMode==8?L"NOME DO PC NO CELULAR":g_editMode==9?L"TOKEN DO BOT DO DISCORD":g_editMode==10?L"CARGO DJ DO DISCORD":g_editMode==11?L"APPLICATION ID (RICH PRESENCE)":g_editMode==12?L"PROGRAMA DE LINHA DE COMANDO":g_editMode==13?L"SEPARADOR DE PARTES (STEMS)":L"EDITAR NOME DO ARTISTA";
     gfx::Text(etitle,(float)(bx+22),(float)(by+18),lab,abr,true);
     std::wstring t;
     if(g_editMode==6) t=L"Porta TCP de 1024 a 65535 (padrão 49875). Só números.";
@@ -273,6 +290,7 @@ static void DrawArtistEditor(int w,int h){
     else if(g_editMode==10) t=L"Nome do cargo (igual no servidor). Quem tem ele controla a música sem votação.";
     else if(g_editMode==11) t=L"Developer Portal > seu app > Application ID > Copy (uns 18 números). Vazio desliga. É o nome desse app que aparece no seu perfil.";
     else if(g_editMode==12) t=L"Caminho de um programa de linha de comando compatível que você já tenha instalado (ex.: /usr/bin/<programa>). Vazio desliga as fontes externas.";
+    else if(g_editMode==13) t=L"Linha de comando do separador que você instalou, com {entrada} (o arquivo) e {saida} (a pasta). Ex.: /usr/bin/<programa> {entrada} --output_dir {saida}. Vazio desliga.";
     else if(g_editMode==2) t=L"Nome da playlist (as músicas ficam onde estão; só o caminho é guardado)";
     else if(g_editMode==4||g_editMode==5) t=L"Música, álbum ou playlist do Spotify, YouTube / YouTube Music, Deezer, Apple Music ou SoundCloud  (Ctrl+V cola)";
     else if(g_editMode==3) t=L"Playlist: "+(g_editTrack>=0&&g_editTrack<(int)g_playlists.size()?g_playlists[(size_t)g_editTrack].name:L"");
@@ -556,7 +574,13 @@ static void DrawFxPanel(int w,int h){
     DrawPill(p.btnClear,L"DESLIGAR EFEITOS",false,S(10));
     gfx::Text(L"STEMS: separar a música",box.X+S(18),(float)p.stem[0].top-S(28),S(12),white,true);
     int cur=StemModeNow();
-    for(int i=0;i<6;i++) DrawPill(p.stem[i],stems::ModeName(i),i==cur,S(10));
+    {   // partes que o separador configurado nao gera ficam apagadas (muitos fazem so vocal/instrumental)
+        std::wstring k=StemKeyCurrent(); bool pronta=!k.empty()&&stems::Complete(k);
+        for(int i=0;i<6;i++){
+            bool falta=pronta&&i>stems::M_FULL&&!stems::TemModo(k,i);
+            DrawPill(p.stem[i],falta?(std::wstring(stems::ModeName(i))+L" —"):std::wstring(stems::ModeName(i)),i==cur,S(10));
+        }
+    }
     std::wstring l1,l2; FxStemStatus(l1,l2);
     RectF inf=RF(p.info);
     gfx::TextRect(l1,RectF(inf.X,inf.Y,inf.Width,S(20)),S(11),white,false,gfx::Near,true,gfx::EllipsisChar);

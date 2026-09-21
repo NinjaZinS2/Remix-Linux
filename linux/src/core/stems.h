@@ -1,11 +1,15 @@
 #pragma once
-// Stems: separa a musica em vocal, bateria, baixo e "outros" com o Demucs (Meta, codigo aberto:
-// github.com/facebookresearch/demucs, MIT; modelo htdemucs). Opcional: instalado pelo usuário
-// cria um Python isolado so para isso (uv + PyTorch de CPU + demucs). Sem ele, o app funciona igual.
+// Stems: separa a musica em vocal, bateria, baixo e "outros" usando um SEPARADOR EXTERNO que a
+// pessoa instala e configura (Configuracoes > SEPARAR EM PARTES). O Remix nao embute nem instala
+// separador nenhum: ele so executa a linha de comando configurada, com {entrada} e {saida}, e
+// reconhece as partes pelo nome dos arquivos que aparecerem. Assim da para trocar de motor sem
+// mexer no app -- inclusive por um mais leve ou mais preciso.
 //
-//  - Na CPU leva cerca de metade da duracao da musica (medido: 3 min em 92 s, 12 nucleos, 1,8 GB de
-//    RAM). Por isso roda em segundo plano, uma musica por vez, com prioridade baixa, e o resultado fica
-//    no cache: da segunda vez em diante trocar de modo e na hora.
+//  - Separar e a tarefa mais pesada do Remix. O perfil de CPU (leve/equilibrado/rapido) decide
+//    quantos nucleos ela pode usar; o processo roda com prioridade baixa e preso a esses nucleos
+//    (nice + taskset), entao nunca toma a maquina. Roda em segundo plano, uma musica por vez, e o
+//    resultado fica no cache: da segunda vez em diante trocar de modo e na hora.
+//  - Quem ja tinha o Python isolado de antes continua funcionando como alternativa.
 //  - Cache: <cache>/stems/<chave>/{vocals,drums,bass,other,instrumental}.flac + "ok". A chave de um
 //    arquivo local muda se o arquivo mudar (caminho + tamanho + data); a de uma musica online e o link.
 //  - Musica online: baixa o audio primeiro (reaproveitando a extracao do CLI de midia em cache).
@@ -14,6 +18,9 @@
 #include <deque>
 #include <map>
 #include <memory>
+
+int g_cfgStemsCpu();          // 1 = leve, 2 = equilibrado, 3 = rapido (app_core.h)
+std::wstring g_cfgSepCmd();   // separador externo configurado pela pessoa (app_core.h)
 
 namespace stems {
 
@@ -24,7 +31,36 @@ inline const wchar_t* ModeFile(int m) { static const wchar_t* k[M_COUNT] = { L""
 inline int ModeFromKey(const std::wstring& k) { for (int m = 0; m < M_COUNT; ++m) if (k == ModeKey(m)) return m; return M_FULL; }
 
 inline std::wstring Root() { return Config::Join(Config::CacheDir(), L"stems"); }
-// Onde o instalador poe o Python do Demucs. Windows: so dentro do Remix (assets\tools\stems).
+
+// ---- quanta CPU a separacao pode usar ------------------------------------------------------
+// Separar uma musica e a tarefa mais pesada do Remix. Ela NUNCA pode tomar a maquina: o padrao
+// e "leve" (um quarto dos nucleos). Alem de pedir menos threads ao separador, o processo e
+// preso a esses nucleos com o taskset -- assim o limite vale mesmo para um separador externo
+// que ignore a opcao de threads.
+inline int PerfilCpu() { int p = g_cfgStemsCpu(); return (p < 1 || p > 3) ? 1 : p; }
+inline const wchar_t* PerfilNome(int p) { static const wchar_t* k[4] = { L"", L"LEVE", L"EQUILIBRADO", L"RÁPIDO" }; return k[(p < 1 || p > 3) ? 1 : p]; }
+inline int NucleosDoPerfil() {
+    int total = (int)std::thread::hardware_concurrency(); if (total <= 0) total = 2;
+    static const double pct[4] = { 0.25, 0.25, 0.5, 0.75 };
+    int n = (int)(total * pct[PerfilCpu()] + 0.5);
+    return std::max(1, std::min(total, n));
+}
+#ifndef _WIN32
+inline bool TemPrograma(const wchar_t* nome) { return !fonte::AcharNoSistema(nome).empty(); }
+// nice (prioridade baixa) + taskset (so N nucleos). Se faltar algum, usa o que der.
+inline std::vector<std::wstring> ComLimiteDeCpu(const std::vector<std::wstring>& cmd) {
+    if (cmd.empty()) return cmd;
+    std::vector<std::wstring> a;
+    std::wstring nice = fonte::AcharNoSistema(L"nice"), tset = fonte::AcharNoSistema(L"taskset");
+    if (!nice.empty()) { a.push_back(nice); a.push_back(L"-n"); a.push_back(L"15"); }
+    if (!tset.empty()) { a.push_back(tset); a.push_back(L"-c"); a.push_back(L"0-" + std::to_wstring(NucleosDoPerfil() - 1)); }
+    for (auto& x : cmd) a.push_back(x);
+    return a;
+}
+#else
+inline std::vector<std::wstring> ComLimiteDeCpu(const std::vector<std::wstring>& cmd) { return cmd; }   // no Windows o runner baixa a prioridade sozinho
+#endif
+// Onde ficava o Python isolado das versoes antigas (alternativa, quando existe).
 // Linux: dentro do Remix (portatil) ou ~/.local/share/remix/stems (instalado por pacote).
 inline std::vector<std::wstring> ToolDirs() {
     std::vector<std::wstring> v;
@@ -58,7 +94,9 @@ inline std::wstring ToolDir() {   // "" = nao instalado
     for (auto& d : ToolDirs()) if (std::filesystem::exists(std::filesystem::path(PythonIn(d)), ec) && HasDemucs(d)) return d;
     return L"";
 }
-inline bool Installed() { return !ToolDir().empty(); }
+inline bool SepExternoOk();   // definido mais abaixo (separador configurado pela pessoa)
+// Da para separar? Vale o separador configurado OU o Python isolado antigo, se existir.
+inline bool Installed() { return SepExternoOk() || !ToolDir().empty(); }
 inline bool InstalledCached() {   // para desenhar (confere o disco no maximo a cada 5 s)
     static std::atomic<ULONGLONG> at{ 0 }; static std::atomic<bool> v{ false };
     ULONGLONG now = GetTickCount64();
@@ -80,11 +118,81 @@ inline std::wstring KeyFor(const std::wstring& src, bool online) {
 inline std::wstring DirFor(const std::wstring& key) { return Config::Join(Root(), key); }
 inline bool Complete(const std::wstring& key) { std::error_code ec; return !key.empty() && std::filesystem::exists(std::filesystem::path(Config::Join(DirFor(key), L"ok")), ec); }
 inline std::wstring FileFor(const std::wstring& key, int mode) { if (mode <= M_FULL || mode >= M_COUNT || !Complete(key)) return L""; return Config::Join(DirFor(key), ModeFile(mode)); }
+// Nem todo separador faz as cinco partes: muitos bons fazem so vocal + instrumental.
+inline bool TemModo(const std::wstring& key, int mode) {
+    if (mode <= M_FULL || mode >= M_COUNT) return true;
+    std::error_code ec; return Complete(key) && std::filesystem::exists(std::filesystem::path(Config::Join(DirFor(key), ModeFile(mode))), ec);
+}
+
+// ---- separador externo (o que a pessoa configurou) -------------------------------------------
+// Contrato: uma linha de comando com {entrada} (o arquivo) e {saida} (uma pasta vazia). O Remix
+// executa, olha o que apareceu na pasta e reconhece cada parte pelo NOME do arquivo (vocal,
+// instrumental, bateria, baixo, outros — em portugues ou ingles). Serve qualquer separador que
+// grave um arquivo por parte, e a pessoa troca de motor quando quiser sem mexer no app.
+inline std::vector<std::wstring> QuebrarLinha(const std::wstring& s) {
+    std::vector<std::wstring> v; std::wstring cur; bool asp = false, tem = false;
+    for (size_t i = 0; i < s.size(); ++i) {
+        wchar_t c = s[i];
+        if (c == L'"') { asp = !asp; tem = true; continue; }
+        if (!asp && (c == L' ' || c == L'\t')) { if (tem || !cur.empty()) { v.push_back(cur); cur.clear(); tem = false; } continue; }
+        cur.push_back(c); tem = true;
+    }
+    if (tem || !cur.empty()) v.push_back(cur);
+    return v;
+}
+inline std::wstring SepPrograma() {
+    auto v = QuebrarLinha(g_cfgSepCmd()); if (v.empty() || v[0].empty()) return L"";
+    return (v[0].find(L'/') != std::wstring::npos || v[0].find(L'\\') != std::wstring::npos) ? (fonte::ExecutavelOk(v[0]) ? v[0] : L"") : fonte::AcharNoSistema(v[0]);
+}
+inline bool SepExternoOk() { return !SepPrograma().empty(); }
+// Qual parte e este arquivo? -1 = nao reconhecido. A ordem importa: "no_vocals" e instrumental.
+inline int ModoDoArquivo(std::wstring nome) {
+    for (auto& c : nome) c = (wchar_t)towlower(c);
+    auto tem = [&](const wchar_t* k) { return nome.find(k) != std::wstring::npos; };
+    if (tem(L"instrumental") || tem(L"no_vocal") || tem(L"novocal") || tem(L"no-vocal") || tem(L"accompaniment") || tem(L"karaoke") || tem(L"backing")) return M_INST;
+    if (tem(L"vocal") || tem(L"voz") || tem(L"voice")) return M_VOCAL;
+    if (tem(L"drum") || tem(L"bateria")) return M_DRUMS;
+    if (tem(L"bass") || tem(L"baixo")) return M_BASS;
+    if (tem(L"other") || tem(L"outros")) return M_OTHER;
+    return -1;
+}
+inline bool EhAudio(const std::wstring& ext) {
+    std::wstring e = ext; for (auto& c : e) c = (wchar_t)towlower(c);
+    return e == L".wav" || e == L".flac" || e == L".mp3" || e == L".m4a" || e == L".ogg" || e == L".opus" || e == L".aiff" || e == L".aif";
+}
+// Converte para o padrao do cache (<parte>.flac). Devolve os modos que entraram (bitmask).
+inline int ImportarSeparados(const std::wstring& origem, const std::wstring& destino, const std::atomic<bool>* cancel) {
+    namespace fs = std::filesystem; std::error_code ec;
+    int achados = 0;
+    for (fs::recursive_directory_iterator it(fs::path(origem), fs::directory_options::skip_permission_denied, ec), end; !ec && it != end; it.increment(ec)) {
+        if (cancel && cancel->load()) break;
+        if (!it->is_regular_file(ec)) continue;
+        if (!EhAudio(it->path().extension().wstring())) continue;
+        std::wstring base = it->path().stem().wstring();
+        int m = ModoDoArquivo(base);
+        if (m < 0) m = ModoDoArquivo(it->path().parent_path().filename().wstring());   // alguns gravam uma pasta por parte
+        if (m <= M_FULL || m >= M_COUNT || (achados & (1 << m))) continue;
+        std::wstring dst = Config::Join(destino, ModeFile(m));
+        CapResult r = RunCapture({ fonte::Ffmpeg(), L"-nostdin", L"-v", L"error", L"-y", L"-i", it->path().wstring(),
+                                   L"-map", L"0:a:0", L"-c:a", L"flac", L"-compression_level", L"5", dst }, 300000, cancel);
+        if (r.code == 0 && fs::exists(fs::path(dst), ec)) achados |= (1 << m);
+    }
+    // 4 partes sem "so musica": o instrumental e a soma das outras tres.
+    if (!(achados & (1 << M_INST)) && (achados & (1 << M_DRUMS)) && (achados & (1 << M_BASS)) && (achados & (1 << M_OTHER))) {
+        std::wstring dst = Config::Join(destino, ModeFile(M_INST));
+        CapResult r = RunCapture({ fonte::Ffmpeg(), L"-nostdin", L"-v", L"error", L"-y",
+                                   L"-i", Config::Join(destino, ModeFile(M_DRUMS)), L"-i", Config::Join(destino, ModeFile(M_BASS)), L"-i", Config::Join(destino, ModeFile(M_OTHER)),
+                                   L"-filter_complex", L"amix=inputs=3:normalize=0", L"-c:a", L"flac", L"-compression_level", L"5", dst }, 300000, cancel);
+        if (r.code == 0 && fs::exists(fs::path(dst), ec)) achados |= (1 << M_INST);
+    }
+    return achados;
+}
 
 // ---- o separador (Python) -------------------------------------------------------------------
-static const char* RUNNER_PY = R"~~~(# Remix: separa a musica em stems com o Demucs (gerado pelo app; pode apagar).
+static const char* RUNNER_PY = R"~~~(# Remix: separador do Python isolado das versoes antigas (gerado pelo app; pode apagar).
 import os, sys
 inp, out, ffmpeg, torch_home = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
+threads = int(sys.argv[5]) if len(sys.argv) > 5 else 2
 if torch_home:
     os.environ['TORCH_HOME'] = torch_home
 try:
@@ -99,7 +207,7 @@ import numpy as np, torch
 from demucs.pretrained import get_model
 from demucs.apply import apply_model
 import soundfile as sf
-torch.set_num_threads(max(1, (os.cpu_count() or 2) - 2))
+torch.set_num_threads(max(1, threads))
 model = get_model('htdemucs'); model.eval()
 sr = model.samplerate
 kw = {}
@@ -160,8 +268,9 @@ inline void Prune(unsigned long long maxBytes = 3ULL * 1024 * 1024 * 1024) {
 inline void RunJob(Job& j, const std::function<void(const std::wstring&, int)>& notify) {
     namespace fs = std::filesystem; std::error_code ec;
     auto fail = [&](const std::wstring& e) { { std::lock_guard<std::mutex> lk(j.m); j.err = e; } j.state = j.cancel ? S_CANCELED : S_FAILED; notify(j.key, j.state); };
-    std::wstring tool = ToolDir();
-    if (tool.empty()) { fail(L"O separador de stems (Demucs) não está instalado: instale o Demucs (pip install demucs) para usar."); return; }
+    bool externo = SepExternoOk();                 // o separador que a pessoa configurou tem preferencia
+    std::wstring tool = externo ? std::wstring() : ToolDir();
+    if (!externo && tool.empty()) { fail(L"Nenhum separador configurado: em Configurações > SEPARAR EM PARTES (STEMS), aponte o programa que você instalou."); return; }
     fonte::Garantir();
     if (!fonte::FfmpegOk()) { fail(L"Precisa do ffmpeg para separar os stems."); return; }
     std::wstring dir = DirFor(j.key);
@@ -201,23 +310,47 @@ inline void RunJob(Job& j, const std::function<void(const std::wstring&, int)>& 
         input = have;
     }
     j.state = S_SEPARATING; j.pct = 0; notify(j.key, j.state);
-    std::vector<std::wstring> args = { PythonIn(tool), RunnerPath(), input, dir, fonte::Ffmpeg(), Config::Join(tool, L"torch") };
-    std::string tail; bool okLine = false; int lastPct = -1;
-    CapResult r = RunCapture(args, 0, &j.cancel, [&](const std::string& ln) {
+    std::string tail; bool okLine = false; int lastPct = -1; int achados = 0;
+    auto progresso = [&](const std::string& ln) {   // qualquer "NN%" na saida vira barra de progresso
         if (ln.find("REMIXOK") != std::string::npos) okLine = true;
-        size_t p = ln.find("%|");
-        if (p != std::string::npos) { size_t b = p; while (b > 0 && isdigit((unsigned char)ln[b - 1])) --b; if (b < p) { int v = atoi(ln.substr(b, p - b).c_str()); if (v >= 0 && v <= 100 && v != lastPct) { lastPct = v; j.pct = v; notify(j.key, S_SEPARATING); } } }
-        if (ln.find("Error") != std::string::npos || ln.find("REMIXERR") != std::string::npos) { tail = ln; if (tail.size() > 200) tail = tail.substr(tail.size() - 200); }
-    }, 256 * 1024);
+        size_t p = ln.find('%');
+        if (p != std::string::npos && p > 0) { size_t b = p; while (b > 0 && isdigit((unsigned char)ln[b - 1])) --b; if (b < p) { int v = atoi(ln.substr(b, p - b).c_str()); if (v >= 0 && v <= 100 && v != lastPct) { lastPct = v; j.pct = v; notify(j.key, S_SEPARATING); } } }
+        if (ln.find("Error") != std::string::npos || ln.find("error") != std::string::npos || ln.find("REMIXERR") != std::string::npos) { tail = ln; if (tail.size() > 200) tail = tail.substr(tail.size() - 200); }
+    };
+    CapResult r;
+    if (externo) {
+        std::wstring tmp = Config::Join(dir, L"saida");
+        fs::remove_all(fs::path(tmp), ec); ec.clear(); fs::create_directories(fs::path(tmp), ec);
+        auto partes = QuebrarLinha(g_cfgSepCmd());
+        std::vector<std::wstring> cmd; cmd.push_back(SepPrograma());
+        bool temEnt = false, temSai = false;
+        auto troca = [&](std::wstring a) {
+            for (;;) { size_t k = a.find(L"{entrada}"); if (k == std::wstring::npos) break; a = a.substr(0, k) + input + a.substr(k + 9); temEnt = true; }
+            for (;;) { size_t k = a.find(L"{saida}"); if (k == std::wstring::npos) break; a = a.substr(0, k) + tmp + a.substr(k + 7); temSai = true; }
+            return a;
+        };
+        for (size_t i = 1; i < partes.size(); ++i) cmd.push_back(troca(partes[i]));
+        if (!temSai) { cmd.push_back(L"--output_dir"); cmd.push_back(tmp); }   // sem marcador: tenta o mais comum
+        if (!temEnt) cmd.push_back(input);                                      // sem marcador: o arquivo vai no fim
+        r = RunCapture(ComLimiteDeCpu(cmd), 0, &j.cancel, progresso, 256 * 1024);
+        if (!j.cancel) achados = ImportarSeparados(tmp, dir, &j.cancel);
+        std::error_code e2; fs::remove_all(fs::path(tmp), e2);
+    } else {
+        std::vector<std::wstring> args = ComLimiteDeCpu({ PythonIn(tool), RunnerPath(), input, dir, fonte::Ffmpeg(),
+                                                         Config::Join(tool, L"torch"), std::to_wstring(NucleosDoPerfil()) });
+        r = RunCapture(args, 0, &j.cancel, progresso, 256 * 1024);
+        for (int m = M_VOCAL; m < M_COUNT; ++m) if (fs::exists(fs::path(Config::Join(dir, ModeFile(m))), ec)) achados |= (1 << m);
+        ec.clear();
+    }
     if (j.cancel) { fail(L"Cancelado."); return; }
-    bool files = true;
-    for (int m = M_VOCAL; m < M_COUNT; ++m) if (!fs::exists(fs::path(Config::Join(dir, ModeFile(m))), ec)) files = false;
-    if (!okLine || !files || r.code != 0) {
+    // Basta ter vocal ou instrumental: ha bons separadores que so fazem essas duas partes.
+    bool util = (achados & (1 << M_VOCAL)) || (achados & (1 << M_INST));
+    if (!util || r.code != 0) {
         std::string e = tail; if (e.empty() && !r.err.empty()) { e = r.err; size_t nl = e.find_last_of('\n', e.size() > 2 ? e.size() - 2 : 0); if (nl != std::string::npos) e = e.substr(nl + 1); if (e.size() > 200) e = e.substr(e.size() - 200); }
         fail(L"A separação falhou" + (e.empty() ? std::wstring(L".") : L": " + Utf8ToWide(e)));
         return;
     }
-    { std::ofstream o(fs::path(Config::Join(dir, L"ok")), std::ios::binary | std::ios::trunc); o << "htdemucs\n"; }
+    { std::ofstream o(fs::path(Config::Join(dir, L"ok")), std::ios::binary | std::ios::trunc); o << achados << "\n"; }
     if (j.online) for (fs::directory_iterator it(fs::path(dir), ec), end; !ec && it != end; it.increment(ec)) if (it->path().stem() == L"entrada" || it->path().filename() == L"info.json") { std::error_code e2; fs::remove(it->path(), e2); }
     j.pct = 100; j.state = S_READY; notify(j.key, j.state);
     Prune();

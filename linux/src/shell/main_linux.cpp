@@ -245,6 +245,7 @@ int main(int argc,char** argv){
 
     float wheelAcc=0; bool shotDone=shotPath.empty(); ULONGLONG shotT0=0; ULONGLONG t0=GetTickCount64();
     bool lastPerf=g_cfg.perfMode; ULONGLONG lastHiddenTick=0;
+    int lastFps=-1; ULONGLONG mexeuEm=GetTickCount64(); Vector2 mouseAnt={0,0};
     while(!g_quit){
         if(g_cfg.sysMedia){ if(!mpris::Active()) mpris::Start(); } else if(mpris::Active()) mpris::Stop();
         if(WindowShouldClose()){ ResetCloseRequest(); RequestClose(); if(g_quit) break; }
@@ -261,7 +262,26 @@ int main(int argc,char** argv){
             int cw=GetScreenWidth(), ch=GetScreenHeight();
             if(cw>0&&ch>0&&(cw!=g_winW||ch!=g_winH)){ g_winW=cw; g_winH=ch; BuildLayout(); }
         }
-        if(lastPerf!=g_cfg.perfMode){ lastPerf=g_cfg.perfMode; SetTargetFPS(lastPerf?30:60); }
+        if(lastPerf!=g_cfg.perfMode){ lastPerf=g_cfg.perfMode; lastFps=-1; }
+        // Quantos quadros por segundo a tela realmente precisa agora. Um player passa a maior
+        // parte do tempo sem nada mudando (ou atras de outra janela): desenhar 60x por segundo
+        // nessas horas so queima CPU -- era o que fazia o Remix pesar enquanto a pessoa jogava.
+        if(!g_hiddenToBg){
+            Vector2 mp0=GetMousePosition();
+            if(mp0.x!=mouseAnt.x||mp0.y!=mouseAnt.y){ mouseAnt=mp0; mexeuEm=GetTickCount64(); }
+            if(IsMouseButtonDown(MOUSE_BUTTON_LEFT)||IsMouseButtonDown(MOUSE_BUTTON_RIGHT)||GetMouseWheelMove()!=0.f) mexeuEm=GetTickCount64();
+            int teto=g_cfg.perfMode?30:60;
+            bool foco=IsWindowFocused()&&!IsWindowMinimized();
+            bool tocando=g_player.playing;
+            bool mexendo=GetTickCount64()-mexeuEm<1500;         // mouse/clique/roda nos ultimos 1,5 s
+            int alvo;
+            if(!foco)              alvo=tocando?10:5;           // atras de um jogo, por exemplo
+            else if(g_showSplash)  alvo=teto;
+            else if(mexendo)       alvo=teto;                    // interagindo: fluido
+            else if(tocando)       alvo=g_cfg.perfMode?20:30;    // so a capa/onda/barra andando
+            else                   alvo=10;                      // parado e sem ninguem mexendo
+            if(alvo!=lastFps){ lastFps=alvo; SetTargetFPS(alvo); }
+        }
         sys::Ev ev; while(sys::Poll(ev)) HandleEvent(ev.type,ev.s,ev.n);
         if(g_cfg.sysMedia) mpris::Poll();
         hkx::Poll();
@@ -276,11 +296,11 @@ int main(int argc,char** argv){
         if(IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) OnLButtonUp();
         if(IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) OnRButtonDown(mx,my);
         wheelAcc+=GetMouseWheelMove(); int steps=(int)wheelAcc; if(steps!=0){ wheelAcc-=steps; OnWheel(steps); }
-        for(int c=GetCharPressed();c;c=GetCharPressed()) OnChar(c);
+        for(int c=GetCharPressed();c;c=GetCharPressed()){ OnChar(c); mexeuEm=GetTickCount64(); }
         {
             int mods=(IsKeyDown(KEY_LEFT_CONTROL)||IsKeyDown(KEY_RIGHT_CONTROL)?KM_CTRL:0)|(IsKeyDown(KEY_LEFT_SHIFT)||IsKeyDown(KEY_RIGHT_SHIFT)?KM_SHIFT:0)|(IsKeyDown(KEY_LEFT_ALT)||IsKeyDown(KEY_RIGHT_ALT)?KM_ALT:0);
-            for(int k=GetKeyPressed();k;k=GetKeyPressed()){ int kc=MapKC(k); if(kc) OnKeyEvent(kc,mods); }
-            if(IsKeyPressedRepeat(KEY_BACKSPACE)) OnKeyEvent(KC_BACKSPACE,mods);
+            for(int k=GetKeyPressed();k;k=GetKeyPressed()){ int kc=MapKC(k); if(kc){ OnKeyEvent(kc,mods); mexeuEm=GetTickCount64(); } }
+            if(IsKeyPressedRepeat(KEY_BACKSPACE)){ OnKeyEvent(KC_BACKSPACE,mods); mexeuEm=GetTickCount64(); }
         }
         BeginDrawing();
         Render();

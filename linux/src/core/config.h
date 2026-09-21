@@ -128,6 +128,13 @@ struct Config {
     // vocal, instrumental, bateria, baixo, outros). Slow e speed nao valem juntos.
     int fxSlow = 0, fxSpeed = 0, fxReverb = 0, fxBass = 0, fx8d = 0;
     std::wstring stemMode;
+    // Quanta CPU a separacao em stems pode usar: 1 = leve (~1/4 dos nucleos),
+    // 2 = equilibrado (~metade), 3 = rapido (~3/4). Leve por padrao: separar nunca
+    // pode atrapalhar o resto do computador (jogo, chamada, trabalho).
+    int stemsCpu = 1;
+    // Separador externo: linha de comando que VOCE configura, com {entrada} e {saida}.
+    // Vazio = usa o Python isolado que a pessoa tenha instalado antes, se existir.
+    std::wstring sepCmd;
     bool shuffle = false;
     bool repeat = false;
 
@@ -446,6 +453,8 @@ struct Config {
             else if (k == L"FxReverb") fxReverb = _wtoi(v.c_str());
             else if (k == L"FxBass") fxBass = _wtoi(v.c_str());
             else if (k == L"Fx8D") fx8d = _wtoi(v.c_str());
+            else if (k == L"StemsCpu") { stemsCpu = _wtoi(v.c_str()); if (stemsCpu < 1 || stemsCpu > 3) stemsCpu = 1; }
+            else if (k == L"SepCmd") sepCmd = v;
             else if (k == L"StemMode") stemMode = (v == L"vocal" || v == L"instrumental" || v == L"bateria" || v == L"baixo" || v == L"outros") ? v : L"";
             else if (k == L"Shuffle") shuffle = (v == L"1");
             else if (k == L"Repeat") repeat = (v == L"1");
@@ -571,6 +580,8 @@ struct Config {
         swprintf(b, 64, L"FxBass=%d", fxBass); ls.push_back(b);
         swprintf(b, 64, L"Fx8D=%d", fx8d); ls.push_back(b);
         ls.push_back(L"StemMode=" + stemMode);
+        swprintf(b, 64, L"StemsCpu=%d", stemsCpu); ls.push_back(b);
+        ls.push_back(L"SepCmd=" + sepCmd);
         ls.push_back(L"Shuffle="); ls.back() += shuffle ? L"1" : L"0";
         ls.push_back(L"Repeat=");  ls.back() += repeat ? L"1" : L"0";
         swprintf(b, 64, L"UIScale=%d", uiScale); ls.push_back(b);

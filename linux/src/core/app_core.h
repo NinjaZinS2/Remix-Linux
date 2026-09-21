@@ -63,6 +63,8 @@ static void ClearWebResultsPlatform();
 // ------------------------------------------------------------ estado -------
 static Config g_cfg;
 std::wstring g_cfgMediaCli(){ return g_cfg.mediaCli; }   // online_resolve.h le o caminho configurado
+int g_cfgStemsCpu(){ return g_cfg.stemsCpu; }            // stems.h: quanta CPU a separacao pode usar
+std::wstring g_cfgSepCmd(){ return g_cfg.sepCmd; }       // stems.h: separador externo configurado
 #include "app_ui.h"
 // Estilo ativo (configuracoes > ESTILO). O LED e o corredor so existem no classico e no spotify.
 static inline const UiPal& UI(){ return UiPalFor(g_cfg.uiStyle); }
@@ -130,6 +132,7 @@ enum : int {
     EV_STEMS,        // stems: mudou o estado de uma separacao (s = chave, n = estado)
     EV_PICK_SOUNDPAD, // soundpad: arquivos escolhidos (s = caminhos separados por \n)
     EV_PICK_CLI,      // fonte externa: executavel escolhido (s = caminho)
+    EV_PICK_SEP,      // separador de partes: executavel escolhido (s = caminho)
     EV_SPAD_ADDED    // soundpad: sons copiados/convertidos (s = erro, n = quantos)
 };
 // Analise incremental do streaming (online_play.h entrega o PCM; esta converte em
@@ -193,7 +196,7 @@ enum : int {
     Z_EQ_BASE=740, Z_SET_AUTOPLAY=760, Z_SET_SORT=761, Z_SET_SORTDIR=762, Z_EQ_ON=763, Z_EQ_RESET=764,
     Z_AUTOPLAY=765, Z_SORT=766, Z_VOL_ICON=767, Z_FOLDER_BTN=768, Z_CONFIRM_YES=769, Z_CONFIRM_NO=770, Z_PERF_TOGGLE=771, Z_BG_TOGGLE=772, Z_QUIT_BTN=773, Z_SYSMEDIA_TOGGLE=774, Z_TAB_TRACKS=780, Z_TAB_PLAYLISTS=781, Z_SEARCH_BOX=782, Z_SEARCH_CLEAR=783, Z_PL_BACK=784, Z_PL_NEW=785, Z_HK_RESET=786,
     Z_TAB_ONLINE=787, Z_PL_ADD=788, Z_PICK_DONE=789, Z_PICK_CANCEL=790, Z_ACTIVITY=791, Z_SET_ON_MODE=792, Z_SET_ON_FMT=793, Z_SET_ON_SRC=794,
-    Z_SET_ON_FOLDER=795, Z_SET_ON_RECHECK=796, Z_PL_MODE=797, Z_ON_CLOSE=798, Z_ON_QBOX=799, Z_ON_SEARCH=800, Z_ON_ADDALL=801, Z_ON_SRC_BASE=810, Z_ON_TAB_BASE=814, Z_SET_CLI=817, Z_SET_CLI_BUSCAR=818, Z_ON_CFG=819,
+    Z_SET_ON_FOLDER=795, Z_SET_ON_RECHECK=796, Z_PL_MODE=797, Z_ON_CLOSE=798, Z_ON_QBOX=799, Z_ON_SEARCH=800, Z_ON_ADDALL=801, Z_ON_SRC_BASE=810, Z_ON_TAB_BASE=814, Z_SET_CLI=817, Z_SET_CLI_BUSCAR=818, Z_ON_CFG=819, Z_SET_SEP=820, Z_SET_SEP_BUSCAR=821, Z_SET_STEMSCPU=822,
     Z_SETTINGS_STYLE_BASE=820,   // +0 classico, +1 limpo, +2 spotify
     // Host: faixa 22000+ (na 1.4.0 ficaram em 821..838 e colidiam com Z_SETTINGS_STYLE_BASE+1/+2:
     // o botao HOST virava "Limpo" e LIGAR O HOST virava "Spotify + LED"). Os static_assert abaixo travam isso.
@@ -251,6 +254,7 @@ static std::vector<RECT> R_plCards, R_plPlay, R_plShuf;
 static RECT R_tabOnline, R_plAdd, R_plMode, R_pickDone, R_pickCancel, R_activity;
 static RECT R_setOnMode, R_setOnFmt, R_setOnSrc, R_setOnFolder, R_setOnRecheck, R_onlineInfo;
 static RECT R_setCli, R_setCliBuscar;   // FONTES EXTERNAS: caminho da CLI e "procurar no sistema"
+static RECT R_setSep, R_setSepBuscar, R_setStemsCpu;   // SEPARAR EM PARTES: linha de comando, escolher programa e perfil de CPU
 static RECT R_setWallChoose, R_setWallClear, R_setCoverBlur;
 static std::vector<RECT> R_themeCirclesSettings, R_runColors, R_playColors, R_navColors;
 static std::vector<RECT> R_partColors, R_ledColors;
@@ -964,9 +968,10 @@ static void RequestStemsFor(int idx,bool front){
     if(IsOnlineTrack(t)){ OTrack o=OTrackFor(t); stems::Request(t.url,true,o.play,o.title,o.artist,o.dur,front,StemsNotify); }
     else stems::Request(t.path,false,L"",t.title,t.artist,t.durSec,front,StemsNotify);
 }
-static void StemsAhead(){   // modo de stem ligado: as proximas 2 da fila ja vao separando
+static void StemsAhead(){   // modo de stem ligado: adianta a proxima da fila, se sobrar CPU para isso
     if(StemModeNow()==stems::M_FULL||!stems::Installed()) return;
-    for(int i:UpcomingIndices(2)) RequestStemsFor(i,false);
+    if(stems::PerfilCpu()<=1) return;          // no perfil leve so separa o que voce esta ouvindo
+    for(int i:UpcomingIndices(1)) RequestStemsFor(i,false);
 }
 // Troca o que esta tocando para o modo escolhido, no mesmo ponto (se o stem ja existe).
 static void SwitchStemSourceNow(){
@@ -980,9 +985,17 @@ static void SwitchStemSourceNow(){
     }
     std::wstring want=StemSourceFor(t);
     if(want.empty()){
-        if(!stems::Installed()){ SetStatus(L"Para separar em stems instale o Demucs: instale o Demucs no PC (pip install demucs).",5000); return; }
+        if(!stems::Installed()){ SetStatus(L"Para separar em partes, configure um separador em Configurações > SEPARAR EM PARTES (STEMS).",5000); return; }
+        // Ja separada, mas o separador configurado nao faz essa parte (muitos fazem so vocal e
+        // instrumental): avisa em vez de separar tudo de novo a toa.
+        if(stems::Complete(StemKeyCurrent())){
+            g_cfg.stemMode=stems::ModeKey(stems::M_FULL); g_cfg.Save();   // volta para a completa: essa parte nao existe
+            SetStatus(std::wstring(L"O separador configurado não gera \"")+stems::ModeName(m)+L"\": ele faz só as partes marcadas.",4200);
+            BuildLayout();
+            return;
+        }
         RequestStemsFor(g_current,true); StemsAhead();
-        SetStatus(L"Separando esta música (na 1ª vez leva ~metade da duração). Enquanto isso toca a completa.",4500); return;
+        SetStatus(L"Separando esta música em segundo plano (perfil "+std::wstring(stems::PerfilNome(stems::PerfilCpu()))+L"). Enquanto isso toca a completa.",4500); return;
     }
     if(_wcsicmp(g_currentSource.c_str(),want.c_str())==0) return;
     g_player.Close(); g_curStreamOpen=false; g_curStreamId=0; g_converting=false;
@@ -992,7 +1005,9 @@ static void SwitchStemSourceNow(){
 static void SetStemMode(int m){
     m=std::max(0,std::min((int)stems::M_COUNT-1,m));
     g_cfg.stemMode=stems::ModeKey(m); g_cfg.Save();
-    if(m==stems::M_FULL) stems::CancelQueued(false);
+    // Voltou para a completa: nenhum stem esta em uso, entao nada de continuar queimando CPU --
+    // cancela a fila E a separacao que esta rodando.
+    if(m==stems::M_FULL) stems::CancelQueued(true);
     SwitchStemSourceNow();
 }
 static void OnStemsEvent(const std::wstring& key,int st){
@@ -1162,6 +1177,15 @@ static void CommitArtistEdit(){
         return;
     }
     if(g_editMode==10){ std::wstring v=Config::Trim(s); if(v.size()>100) v.resize(100); CancelArtistEdit(); DcSetDjRole(v); SetStatus(v.empty()?L"Sem cargo DJ: só admins e o dono pulam sem votação.":L"Cargo DJ: "+v,2800); return; }
+    if(g_editMode==13){   // linha de comando do separador de partes (stems)
+        std::wstring v=Config::Trim(s);
+        CancelArtistEdit();
+        g_cfg.sepCmd=v; g_cfg.Save();
+        if(v.empty()) SetStatus(L"Separador desligado. O player e os efeitos continuam iguais.",3800);
+        else if(stems::SepExternoOk()) SetStatus(L"Separador pronto: "+stems::SepPrograma(),4000);
+        else SetStatus(L"Não achei esse programa (ou ele não é executável). Confira o caminho.",4500);
+        return;
+    }
     if(g_editMode==12){   // caminho do programa de linha de comando (fonte externa)
         std::wstring v=Config::Trim(s);
         CancelArtistEdit();
@@ -1635,6 +1659,13 @@ static void HandleEvent(int type,const std::wstring& s,int n){
     case EV_HOST_STATUS: SetStatus(s,n?6000:4000); break;
     case EV_STEMS: OnStemsEvent(s,n); break;
     case EV_PICK_SOUNDPAD: OnPickedSoundpad(s); break;
+    case EV_PICK_SEP: {
+        std::wstring v=Config::Trim(s);
+        if(v.empty()) break;
+        // Sem argumentos o Remix acrescenta os dois marcadores do contrato.
+        g_cfg.sepCmd=v+L" {entrada} --output_dir {saida}"; g_cfg.Save();
+        SetStatus(stems::SepExternoOk()?(L"Separador pronto: "+stems::SepPrograma()+L" (ajuste os argumentos se precisar)"):std::wstring(L"Esse arquivo não é executável."),5000);
+    } break;
     case EV_PICK_CLI: {
         std::wstring v=Config::Trim(s);
         if(v.empty()) break;
