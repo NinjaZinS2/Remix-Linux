@@ -240,7 +240,7 @@ o estado do host.
 
 ## O que mudou na 1.5.2
 
-- Efeitos (Slow, Speed, Reverb, Grave, 8D) e stems (Demucs) também no celular, aplicados pelo PC; onda no ritmo real
+- Efeitos (Slow, Speed, Reverb, Grave, 8D) e stems (pelo separador configurado no PC) também no celular, aplicados pelo PC; onda no ritmo real
   calculada pelo PC; rotas `/api/stems` e `/api/ritmo`.
 
 ## O que mudou na 1.5.1

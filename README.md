@@ -73,6 +73,19 @@ EQUILIBRADO ou RÁPIDO) decide quantos núcleos a separação pode usar, e o pro
 prioridade baixa preso a esses núcleos. No perfil leve, com 12 núcleos, a separação fica em 3 — dá
 para jogar enquanto isso.
 
+Formatos de linha de comando que já funcionam (troque `<programa>` pelo que você instalou):
+
+```ini
+SepCmd=<programa> {entrada} --output_dir {saida} --output_format FLAC
+SepCmd=<programa> --out {saida} {entrada}
+SepCmd=<programa> separate -o {saida} {entrada}
+```
+
+O Remix reconhece os nomes usuais dos arquivos de saída — `vocals`/`vocal`/`voz`,
+`instrumental`/`no_vocals`/`accompaniment`/`karaoke`, `drums`/`bateria`, `bass`/`baixo`,
+`other`/`outros` — inclusive dentro de subpastas, e monta o "só a música" somando as partes quando
+o separador não gera esse arquivo.
+
 <p align="center">
   <img src="linux/docs/screenshots/inicio.png" alt="Tela inicial e o painel Tocando agora" width="49%">
   <img src="linux/docs/screenshots/biblioteca.png" alt="Biblioteca em lista, com capa, origem e duração" width="49%">
@@ -176,9 +189,9 @@ do **Host** — o PC vira servidor para o celular — para o Remix chegar ao **i
 - **Efeitos (cabeçalho › EFEITOS):** Slow, Speed, Reverb, Grave e 8D, cada um com 3 níveis (cada clique sobe:
   1 → 2 → 3 → desliga). Slow e speed mudam velocidade e tom juntos (estilo "slowed"/"sped up") e não somam.
 - **Stems (mesmo painel):** Completa, Só vocal, Só música, Bateria, Baixo e Outros, separados em segundo plano pelo
-  Demucs (opcional, veja o instalador de dependências). Na CPU a primeira separação leva cerca de metade da duração
-  da música; enquanto isso toca a completa, e quando termina o Remix troca para o stem no mesmo ponto. Fica guardado
-  (até 3 GB): da segunda vez é na hora. Com um modo ligado, as próximas da fila já vão sendo separadas.
+  separador que você configurou (veja [Separar em partes](#separar-em-partes-opcional)). Enquanto separa, toca a
+  completa; quando termina, o Remix troca para a parte escolhida no mesmo ponto. Fica guardado (até 3 GB): da segunda
+  vez é na hora. As partes que o seu separador não gera aparecem marcadas com "—".
 - **Onda no ritmo:** a altura vem da energia fina do áudio (25 ms), o "pulo" das batidas detectadas no espectro e o
   atraso da saída de som é descontado (antes lia 50 ms à frente e ainda adiantava até 4% ao longo da música).
 
