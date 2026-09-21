@@ -9,7 +9,7 @@
 %global __brp_check_rpaths %{nil}
 
 Name:           remix
-Version:        %{?remix_version}%{!?remix_version:1.6.0}
+Version:        %{?remix_version}%{!?remix_version:1.6.1}
 Release:        %{?remix_release}%{!?remix_release:1}%{?dist}
 Summary:        Remix Player — player de música multiplataforma
 License:        Apache-2.0 AND zlib AND MIT AND Bitstream-Vera
@@ -57,6 +57,14 @@ cp -a usr %{buildroot}/
 %doc %{_docdir}/%{name}/
 
 %changelog
+* Mon Sep 21 2026 Sodre <103298328+NinjaZinS2@users.noreply.github.com> - 1.6.1-1
+- Quadros sob demanda: a janela desenha conforme a tela precisa (10 fps atras de
+  outra janela, 30 tocando, 60 so enquanto voce mexe)
+- Separacao em partes com teto de CPU (perfil leve por padrao) e separador
+  configuravel pela pessoa; voltar para COMPLETA cancela a separacao em andamento
+- Inicio funciona sem internet: da para desligar as novidades e a tela monta as
+  fileiras com a sua propria biblioteca
+
 * Fri Sep 18 2026 DevelopersOpenSource <103298328+NinjaZinS2@users.noreply.github.com> - 1.6.0-1
 - Estilo REMIX: barra lateral com a biblioteca, tela inicial com novidades e o
   player numa barra embaixo (substitui os estilos Limpo e Spotify + LED)
