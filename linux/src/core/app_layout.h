@@ -880,7 +880,8 @@ static void LayoutFxPanel(int w,int h){
     for(int i=0;i<6;i++){ int x=bx+pad+i*(sw+gap); p.stem[i]={x,y,x+sw,y+SI(44)}; }
     y+=SI(44)+SI(14);
     p.btnCancel={bx+bw-pad-(int)S(120),y,bx+bw-pad,y+SI(34)};
-    p.info={bx+pad,y,p.btnCancel.left-SI(12),by+bh-SI(12)};
+    p.btnCpu={p.btnCancel.left-SI(10)-(int)S(210),y,p.btnCancel.left-SI(10),y+SI(34)};
+    p.info={bx+pad,y,p.btnCpu.left-SI(12),by+bh-SI(12)};
 }
 // Texto do estado dos stems da faixa atual (duas linhas).
 static void FxStemStatus(std::wstring& l1,std::wstring& l2){

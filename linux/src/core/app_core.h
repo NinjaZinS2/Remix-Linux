@@ -205,7 +205,7 @@ enum : int {
     Z_HOST_CLOSE=22050, Z_HOST_TOGGLE, Z_HOST_TUNNEL, Z_HOST_HTML, Z_HOST_PASTA, Z_HOST_PORT, Z_HOST_PIN, Z_HOST_NAME, Z_HOST_LAN,
     Z_HOST_NEWLINK, Z_HOST_COPYTUN, Z_HOST_COPYLAN, Z_HOST_QRMODE, Z_HOST_QRNEW, Z_HOST_ONLINE, Z_HOST_QRCONF, Z_HOST_IPV6,
     Z_HOST_DEVLIB_BASE=22100, Z_HOST_DPLOK_BASE=22200,   // +100 aparelhos, +500 playlists de aparelhos
-    Z_FX_BTN=23000, Z_FX_CLOSE, Z_FX_CLEAR, Z_FX_CANCEL, Z_FX_BASE=23010, Z_STEM_BASE=23020,   // efeitos (+5) e stems (+6)
+    Z_FX_BTN=23000, Z_FX_CLOSE, Z_FX_CLEAR, Z_FX_CANCEL, Z_FX_CPU, Z_FX_BASE=23010, Z_STEM_BASE=23020,   // efeitos (+5) e stems (+6)
     Z_SPAD_BTN=24000, Z_DC_BTN, Z_SET_SPAD, Z_SET_DC,   // SOUNDPAD e DISCORD (os paineis usam 24010..26800, app_panels.h)
     Z_DC_PLCARD_BASE=16500, Z_DC_CARD_BASE=6000000,      // botao ▶ DISCORD sobre a capa: playlist (+500) e faixa (+1 milhao)
     Z_HOST_ACCEPT_BASE=17000, Z_HOST_DENY_BASE=17100, Z_HOST_REVOKE_BASE=17200, Z_HOST_PL_BASE=17300, Z_HOST_PLDEV_BASE=17500,   // playlist*20+dispositivo (ate 21500)
@@ -240,7 +240,7 @@ static RECT R_setHostOn, R_setHostPort, R_setHostPin, R_setHostName, R_setHostTu
 static RECT R_fxBtn;   // EFEITOS (cabecalho)
 static RECT R_spadBtn, R_dcBtn, R_setSpad, R_setDc;   // SOUNDPAD e DISCORD (cabecalho e configuracoes)
 static std::vector<RECT> R_cardDcBtns, R_plDcBtns;   // ▶ DISCORD sobre a capa (so com o bot conectado)
-struct FxPanelUI { bool open=false; RECT box{0,0,0,0}, btnClose{0,0,0,0}, btnClear{0,0,0,0}, btnCancel{0,0,0,0}, info{0,0,0,0}; RECT fx[5]{}; RECT stem[6]{}; };
+struct FxPanelUI { bool open=false; RECT box{0,0,0,0}, btnClose{0,0,0,0}, btnClear{0,0,0,0}, btnCancel{0,0,0,0}, btnCpu{0,0,0,0}, info{0,0,0,0}; RECT fx[5]{}; RECT stem[6]{}; };
 static FxPanelUI g_fxp;
 static RECT R_verticalCoverButton;
 static RECT R_playerPanel;

@@ -589,6 +589,7 @@ static void DrawFxPanel(int w,int h){
     gfx::TextRect(l1,RectF(inf.X,inf.Y,inf.Width,S(20)),S(11),white,false,gfx::Near,true,gfx::EllipsisChar);
     if(!l2.empty()) gfx::TextRect(l2,RectF(inf.X,inf.Y+S(22),inf.Width,S(20)),S(10.5f),gray,false,gfx::Near,true,gfx::EllipsisChar);
     if(StemJobActive()) DrawPill(p.btnCancel,L"CANCELAR",false,S(10));
+    DrawPill(p.btnCpu,std::wstring(L"CPU: ")+stems::PerfilNome(g_cfg.stemsCpu)+L" ("+std::to_wstring(stems::NucleosDoPerfil())+L" núcleos)",g_cfg.stemsCpu>1,S(10));
 }
 // ---- paineis montados no codigo comum (SOUNDPAD, DISCORD: app_panels.h) ------
 static Color PanelColor(int c){

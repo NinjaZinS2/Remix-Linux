@@ -21,6 +21,7 @@ static int HitTest(int x,int y){
         if(PtIn(p.btnClose,x,y)) return Z_FX_CLOSE;
         if(PtIn(p.btnClear,x,y)) return Z_FX_CLEAR;
         if(StemJobActive()&&PtIn(p.btnCancel,x,y)) return Z_FX_CANCEL;
+        if(PtIn(p.btnCpu,x,y)) return Z_FX_CPU;
         for(int i=0;i<5;i++) if(PtIn(p.fx[i],x,y)) return Z_FX_BASE+i;
         for(int i=0;i<6;i++) if(PtIn(p.stem[i],x,y)) return Z_STEM_BASE+i;
         return -1;
@@ -362,6 +363,11 @@ static void OnLButtonDown(int x,int y){
         if(fid==Z_FX_CLOSE||!PtIn(g_fxp.box,x,y)){ g_fxp.open=false; return; }
         if(fid==Z_FX_CLEAR){ ClearFx(); return; }
         if(fid==Z_FX_CANCEL){ stems::CancelQueued(true); SetStatus(L"Separação cancelada.",2000); return; }
+        if(fid==Z_FX_CPU){
+            g_cfg.stemsCpu=g_cfg.stemsCpu>=3?1:g_cfg.stemsCpu+1; g_cfg.Save();
+            SetStatus(std::wstring(L"Separação: ")+stems::PerfilNome(g_cfg.stemsCpu)+L" ("+std::to_wstring(stems::NucleosDoPerfil())+L" núcleos). Vale para a próxima música.",3500);
+            return;
+        }
         if(fid>=Z_FX_BASE&&fid<Z_FX_BASE+5){ CycleFx(fid-Z_FX_BASE); return; }
         if(fid>=Z_STEM_BASE&&fid<Z_STEM_BASE+6){ SetStemMode(fid-Z_STEM_BASE); return; }
         return;
