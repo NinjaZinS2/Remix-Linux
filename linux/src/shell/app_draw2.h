@@ -173,7 +173,7 @@ static void DrawSettings(int w,int h){
                           RectF((float)R_setSep.left,(float)R_setSep.top-70,lw,18),sm,gray,false,gfx::Near,false,gfx::EllipsisChar);
             gfx::TextRect(L"Use {entrada} para o arquivo e {saida} para a pasta; o Remix reconhece as partes pelo nome dos arquivos.",
                           RectF((float)R_setSep.left,(float)R_setSep.top-53,lw,18),sm,gray,false,gfx::Near,false,gfx::EllipsisChar);
-            gfx::TextRect(L"Separar é pesado: no perfil LEVE ele fica preso a poucos núcleos e não atrapalha jogo nem chamada.",
+            gfx::TextRect(L"Separar é pesado: no perfil LEVE ele fica preso a poucos núcleos e não atrapalha jogo nem chamada. Sugestões em docs/SEPARADORES.md.",
                           RectF((float)R_setSep.left,(float)R_setSep.top-36,lw,18),sm,gray,false,gfx::Near,false,gfx::EllipsisChar);
             gfx::TextRect(sok?(L"Separador pronto: "+stems::SepPrograma()):(velho?std::wstring(L"Usando o separador antigo já instalado neste PC."):(g_cfg.sepCmd.empty()?std::wstring(L"Nenhum separador configurado: os modos de stem ficam desligados."):std::wstring(L"Não achei esse programa (ou ele não é executável)."))),
                           RectF((float)R_setSep.left,(float)R_setSep.top-19,lw,18),sm,(sok||velho)?white:Argb(255,235,150,110),false,gfx::Near,false,gfx::EllipsisChar);

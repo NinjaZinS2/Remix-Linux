@@ -73,18 +73,20 @@ EQUILIBRADO ou RÁPIDO) decide quantos núcleos a separação pode usar, e o pro
 prioridade baixa preso a esses núcleos. No perfil leve, com 12 núcleos, a separação fica em 3 — dá
 para jogar enquanto isso.
 
-Formatos de linha de comando que já funcionam (troque `<programa>` pelo que você instalou):
+**Recomendado:** o [audio-separator](https://github.com/nomadkaraoke/python-audio-separator) (aberto,
+MIT), que roda os melhores modelos de CPU. Instale só a parte de CPU (~1,3 GB) e aponte no Remix:
 
 ```ini
-SepCmd=<programa> {entrada} --output_dir {saida} --output_format FLAC
-SepCmd=<programa> --out {saida} {entrada}
-SepCmd=<programa> separate -o {saida} {entrada}
+# vocal + instrumental, o melhor corte que roda em CPU:
+SepCmd=audio-separator {entrada} --output_dir {saida} --output_format FLAC -m UVR-MDX-NET-Inst_HQ_4.onnx
+# as 4 partes (vocal, bateria, baixo, outros), via Demucs no mesmo programa:
+SepCmd=audio-separator {entrada} --output_dir {saida} --output_format FLAC -m htdemucs.yaml
 ```
 
-O Remix reconhece os nomes usuais dos arquivos de saída — `vocals`/`vocal`/`voz`,
-`instrumental`/`no_vocals`/`accompaniment`/`karaoke`, `drums`/`bateria`, `bass`/`baixo`,
-`other`/`outros` — inclusive dentro de subpastas, e monta o "só a música" somando as partes quando
-o separador não gera esse arquivo.
+O Remix reconhece os nomes usuais dos arquivos de saída (`vocals`/`voz`, `instrumental`/`no_vocals`/
+`karaoke`, `drums`/`bateria`, `bass`/`baixo`, `other`/`outros`), inclusive dentro de subpastas, e
+monta o "só a música" somando as partes quando o separador não gera esse arquivo. Comparação de
+velocidade, qualidade e como instalar em [linux/docs/SEPARADORES.md](linux/docs/SEPARADORES.md).
 
 <p align="center">
   <img src="linux/docs/screenshots/inicio.png" alt="Tela inicial e o painel Tocando agora" width="49%">
@@ -102,14 +104,17 @@ documentação. Nenhuma obra, capa ou foto de terceiros aparece aqui.</sub>
 ## Créditos
 
 <p align="center">
-  <a href="https://github.com/Nero-2077"><img src="https://raw.githubusercontent.com/NinjaZinS2/Remix-Linux/main/linux/docs/creditos/nero-2077.pt-BR.svg" alt="Nero-2077: autor do Remix, ideia original e versão Windows" width="48%"></a>
-  <a href="https://github.com/NinjaZinS2"><img src="https://raw.githubusercontent.com/NinjaZinS2/Remix-Linux/main/linux/docs/creditos/sodre.pt-BR.svg" alt="Sodre (NinjaZinS2): co-desenvolvedor, playlists, streaming, versão Linux e Host para iOS" width="48%"></a>
+  <a href="https://github.com/NinjaZinS2"><img src="https://raw.githubusercontent.com/NinjaZinS2/Remix-Linux/main/linux/docs/creditos/sodre.pt-BR.svg" alt="Sodre (NinjaZinS2): autor da versão Linux, playlists, streaming e Host para iOS" width="48%"></a>
+  <a href="https://github.com/Nero-2077"><img src="https://raw.githubusercontent.com/NinjaZinS2/Remix-Linux/main/linux/docs/creditos/nero-2077.pt-BR.svg" alt="Nero-2077: autor original do Remix e da versão Windows" width="48%"></a>
 </p>
 
-**[Nero-2077](https://github.com/Nero-2077)** criou o Remix: a ideia original e a versão Windows.
-**Sodre** ([NinjaZinS2](https://github.com/NinjaZinS2)) entrou depois como co-desenvolvedor: participou da versão Windows,
-sugeriu e desenvolveu as playlists e a música online (streaming e downloads), levou o Remix para o Linux e teve a ideia
-do **Host** — o PC vira servidor para o celular — para o Remix chegar ao **iPhone (iOS) e a outros celulares** enquanto o Nero faz a versão Android.
+**Este repositório (Remix para Linux) é de [Sodre](https://github.com/NinjaZinS2) (NinjaZinS2)**, autor
+da versão Linux. Ele desenvolveu o porte para Linux (raylib + miniaudio), as playlists e a música online
+(streaming e cópias), e teve a ideia do **Host** — o PC vira servidor para o celular — que levou o Remix
+ao **iPhone (iOS) e a outros celulares**.
+
+**[Nero-2077](https://github.com/Nero-2077)** é o autor original do Remix (a ideia e a versão Windows), que
+o Sodre portou para o Linux. A versão Windows é mantida pelo Nero à parte.
 
 ## Interface
 
