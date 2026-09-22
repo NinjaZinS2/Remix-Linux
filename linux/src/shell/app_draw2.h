@@ -152,6 +152,7 @@ static void DrawSettings(int w,int h){
         gfx::TextRect(L"Cópias salvas em "+OnlineDownloadBaseCached()+L"   ·   streaming fica só na memória (fechar o app não deixa arquivo pela metade)",RectF((float)R_setOnSrc.left,(float)R_setOnSrc.bottom+8,(float)(R_setOnFolder.right-R_setOnSrc.left),16),sm,gray,false,gfx::Near,false,gfx::EllipsisPath);
         {   // programa de linha de comando que a pessoa configurou
             std::wstring cam=g_cfg.mediaCli.empty()?std::wstring(L"(nenhum configurado)"):g_cfg.mediaCli;
+            bool conferindo=!fonte::JaConferiu();
             bool ok=fonte::Configurada();
             float lw=(float)(R_setCli.right-R_setCli.left);
             gfx::TextRect(L"O Remix não instala nem distribui nada: aponte um programa que você já tenha.",
@@ -160,8 +161,13 @@ static void DrawSettings(int w,int h){
                           RectF((float)R_setCli.left,(float)R_setCli.top-53,lw,18),sm,gray,false,gfx::Near,false,gfx::EllipsisChar);
             gfx::TextRect(L"Sem isso, o player local, as playlists e os arquivos continuam funcionando.",
                           RectF((float)R_setCli.left,(float)R_setCli.top-36,lw,18),sm,gray,false,gfx::Near,false,gfx::EllipsisChar);
-            gfx::TextRect(ok?(L"Encontrado: "+fonte::Versao()):(g_cfg.mediaCli.empty()?std::wstring(L"Nenhum programa configurado: as fontes externas estão desligadas."):std::wstring(L"Não encontrei esse arquivo (ou ele não é executável).")),
-                          RectF((float)R_setCli.left,(float)R_setCli.top-19,lw,18),sm,ok?white:Argb(255,235,150,110),false,gfx::Near,false,gfx::EllipsisChar);
+            // Enquanto o probe roda, "Conferindo..." em vez de piscar "Não encontrei".
+            std::wstring cliMsg;
+            if(conferindo&&!g_cfg.mediaCli.empty()) cliMsg=L"Conferindo o programa...";
+            else if(ok) cliMsg=L"Encontrado: "+fonte::Versao();
+            else if(g_cfg.mediaCli.empty()) cliMsg=L"Nenhum programa configurado: as fontes externas estão desligadas.";
+            else cliMsg=L"Não encontrei esse arquivo (ou ele não é executável).";
+            gfx::TextRect(cliMsg,RectF((float)R_setCli.left,(float)R_setCli.top-19,lw,18),sm,(ok||conferindo)?white:Argb(255,235,150,110),false,gfx::Near,false,gfx::EllipsisChar);
             btn(R_setCli,L"CAMINHO: "+cam,ok);
             btn(R_setCliBuscar,L"ESCOLHER O PROGRAMA...",false);
         }

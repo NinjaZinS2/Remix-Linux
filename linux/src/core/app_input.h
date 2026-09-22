@@ -726,7 +726,7 @@ static void RunAction(const std::string& a){
     else if(a=="cd"){g_cfg.displayMode=L"normal";g_cfg.artShape=L"cd";PlatformResizeForMode();}
     else if(a=="list"){g_cfg.listMode=1;BuildLayout();}
     else if(a=="grid"){g_cfg.listMode=0;BuildLayout();}
-    else if(a=="settings"){g_showSettings=!g_showSettings;}
+    else if(a=="settings"){g_showSettings=!g_showSettings; if(g_showSettings)EnsureToolsAsync();}
     else if(a.rfind("style:",0)==0){g_cfg.uiStyle=std::max(0,std::min(2,atoi(a.c_str()+6)));BuildLayout();}
     else if(a.rfind("hostpin:",0)==0){g_cfg.hostPin=Utf8ToWide(a.substr(8));}
     else if(a.rfind("hostport:",0)==0){g_cfg.hostPort=atoi(a.c_str()+9);}
