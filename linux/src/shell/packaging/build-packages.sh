@@ -4,11 +4,11 @@
 #   dist/remix-<ver>-<rel>.x86_64.rpm  (Fedora, Nobara, RHEL-like)
 #   dist/Remix-<ver>-x86_64.AppImage    (qualquer distro: um arquivo so)
 # Requer: dpkg-deb (pacote dpkg) e rpmbuild (pacote rpm-build). Nao precisa de root.
-#   REMIX_VERSION=1.6.1 REMIX_RELEASE=1 src/shell/packaging/build-packages.sh
+#   REMIX_VERSION=1.6.2 REMIX_RELEASE=1 src/shell/packaging/build-packages.sh
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 cd "$ROOT"
-VER="${REMIX_VERSION:-1.6.1}"
+VER="${REMIX_VERSION:-1.6.2}"
 REL="${REMIX_RELEASE:-1}"
 ARCH_DEB=amd64
 [ -x build/remix ] || bash src/shell/build.sh

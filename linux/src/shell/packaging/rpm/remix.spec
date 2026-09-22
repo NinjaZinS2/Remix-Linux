@@ -9,7 +9,7 @@
 %global __brp_check_rpaths %{nil}
 
 Name:           remix
-Version:        %{?remix_version}%{!?remix_version:1.6.1}
+Version:        %{?remix_version}%{!?remix_version:1.6.2}
 Release:        %{?remix_release}%{!?remix_release:1}%{?dist}
 Summary:        Remix Player — player de música multiplataforma
 License:        Apache-2.0 AND zlib AND MIT AND Bitstream-Vera
@@ -57,6 +57,10 @@ cp -a usr %{buildroot}/
 %doc %{_docdir}/%{name}/
 
 %changelog
+* Mon Sep 21 2026 Sodre <103298328+NinjaZinS2@users.noreply.github.com> - 1.6.2-1
+- Corrige botoes do separador (SEPARAR EM PARTES) que trocavam o estilo do app
+  por colisao de zone-id; static_assert trava o problema
+
 * Mon Sep 21 2026 Sodre <103298328+NinjaZinS2@users.noreply.github.com> - 1.6.1-1
 - Quadros sob demanda: a janela desenha conforme a tela precisa (10 fps atras de
   outra janela, 30 tocando, 60 so enquanto voce mexe)

@@ -4,10 +4,10 @@
 # execucao e abre. Config/capas ficam em ~/.config/remix (como no .deb/.rpm).
 # Ferramentas (appimagetool + runtime estatico) ficam em third_party/appimage/
 # (ja incluidas no projeto; se faltarem, baixa do GitHub). Nao precisa de root.
-#   REMIX_VERSION=1.6.1 src/shell/build-appimage.sh
+#   REMIX_VERSION=1.6.2 src/shell/build-appimage.sh
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"; cd "$ROOT"
-VER="${REMIX_VERSION:-1.6.1}"
+VER="${REMIX_VERSION:-1.6.2}"
 TOOLDIR="$ROOT/third_party/appimage"
 TOOL="$TOOLDIR/appimagetool-x86_64.AppImage"; RUNTIME="$TOOLDIR/runtime-x86_64"
 mkdir -p "$TOOLDIR"
